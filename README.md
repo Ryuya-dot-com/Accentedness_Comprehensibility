@@ -8,13 +8,13 @@ This static browser platform collects three listener-based measures from partici
 
 The design follows the listener-based word-level measurement logic in Uchihara (2022), adapted to a 10-point scale and a combined trial format.
 
-## Entry Point
+## Public Entry Point
 
 ```text
-Rating_Platform/index.html
+https://ryuya-dot-com.github.io/Accentedness_Comprehensibility/
 ```
 
-From `Experiment/`, preview locally with:
+Preview locally with:
 
 ```sh
 python3 -m http.server 8765
@@ -23,15 +23,15 @@ python3 -m http.server 8765
 Then open:
 
 ```text
-http://127.0.0.1:8765/Rating_Platform/
+http://127.0.0.1:8765/
 ```
 
 ## Workflow
 
-1. Enter a rater ID and session label.
-2. Check participant ID(s) from the automatically loaded GitHub manifest, or upload local WAV files.
-3. Optionally upload a local manifest CSV with metadata.
-4. Click `Prepare checked participants` for GitHub audio, or `Prepare trials` for local audio.
+1. Enter a rater ID.
+2. Check participant ID(s) from the automatically loaded GitHub manifest.
+3. Click `Prepare selected participants`.
+4. Confirm or edit the auto-filled session label.
 5. Click `Start rating`.
 6. Choose a task mode:
    - `Combined`: collect ratings and dictation in the same trial.
@@ -40,14 +40,16 @@ http://127.0.0.1:8765/Rating_Platform/
 7. For each sample, play the audio once, then complete the displayed response fields.
 8. Download the ZIP at the end of the session.
 
+Local WAV import remains available under `Local import / troubleshooting`, but it is intended for pilot checks or recovery when the uploaded manifest is unavailable.
+
 ## GitHub Audio Workflow
 
-Use `remote_manifest.csv` when participant recordings are already uploaded to GitHub or GitHub Pages. The default manifest loads automatically, the setup screen lists available `participant_id` values as checkboxes, and the rater prepares only the checked participants. A custom manifest URL is available through the `Use a custom GitHub manifest` option.
+Use `remote_manifest.csv` when participant recordings are already uploaded to GitHub or GitHub Pages. The default manifest loads automatically, the setup screen lists available `participant_id` values as checkboxes, and the rater prepares only the checked participants. A custom manifest URL is available through `Use a different GitHub manifest`.
 
 Recommended GitHub Pages layout:
 
 ```text
-Rating_Platform/
+Accentedness_Comprehensibility/
   index.html
   remote_manifest.csv
   recordings/
@@ -71,21 +73,23 @@ You can also use an absolute `audio_url` column for raw GitHub or another static
 
 ```csv
 audio_url,target_word,participant_id,native_language,condition
-https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness/main/Rating_Platform/recordings/001/001_production_001_icicle.wav,icicle,001,japanese,production
+https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness_Comprehensibility/main/recordings/001/001_production_001_icicle.wav,icicle,001,japanese,production
 ```
 
 Rater flow:
 
 1. Enter `Rater ID`.
 2. Check one or more `Participant ID` values.
-3. Click `Prepare checked participants`.
+3. Click `Prepare selected participants`.
 4. Start rating.
 
 The downloaded CSV and assignment JSON include `audio_url`, `source_path`, and `participant_id` so the rated material can be audited later. See `remote_manifest_template.csv` for a minimal template.
 
+Important: uploaded participant recordings must be anonymized before publication. Do not include names, student numbers, email addresses, or other direct identifiers in folder names, filenames, manifest rows, or GitHub commit history.
+
 ## Manifest CSV
 
-The manifest is optional. The platform can infer target words from these existing filename patterns:
+For the GitHub workflow, the manifest is required because it tells the platform which uploaded audio files belong to each participant. For local import only, the platform can infer target words from these existing filename patterns:
 
 ```text
 001_production_001_icicle.wav
@@ -115,21 +119,21 @@ See `manifest_template.csv`.
 Synthetic practice samples can be generated locally on macOS:
 
 ```sh
-bash Rating_Platform/scripts/generate_practice_accent_audio.sh
+bash scripts/generate_practice_accent_audio.sh
 ```
 
 This creates:
 
 ```text
-Rating_Platform/practice_audio/english/{chocolate,coffee,pizza,sofa}.wav
-Rating_Platform/practice_audio/japanese/{chocolate,coffee,pizza,sofa}.wav
-Rating_Platform/practice_audio/chinese/{chocolate,coffee,pizza,sofa}.wav
-Rating_Platform/practice_manifest.csv
+practice_audio/english/{chocolate,coffee,pizza,sofa}.wav
+practice_audio/japanese/{chocolate,coffee,pizza,sofa}.wav
+practice_audio/chinese/{chocolate,coffee,pizza,sofa}.wav
+practice_manifest.csv
 ```
 
 The English samples use English TTS. The Japanese samples use katakana-shaped forms such as `チョコレート`, and the Chinese samples use comparable loanword/cognate forms such as `巧克力`. These are for rater practice and interface checks only, not for final data collection.
 
-After generating the files, start the local web server and click `Load practice samples` in the setup screen. The bundled practice loader uses browser `fetch`, so use `http://127.0.0.1:8765/Rating_Platform/` rather than opening `index.html` directly from Finder.
+After generating the files, start the local web server and click `Load practice samples` in the setup screen. The bundled practice loader uses browser `fetch`, so use `http://127.0.0.1:8765/` rather than opening `index.html` directly from Finder.
 
 ## Output
 

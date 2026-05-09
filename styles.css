@@ -249,6 +249,11 @@ label {
   padding: 16px;
 }
 
+.remote-card.primary-source {
+  background: #f2f8f8;
+  border-color: #bad3d6;
+}
+
 .remote-heading,
 .participant-actions {
   align-items: center;
@@ -256,6 +261,38 @@ label {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: space-between;
+}
+
+.remote-heading {
+  align-items: flex-start;
+}
+
+.remote-heading h4,
+.remote-heading p {
+  margin: 0;
+}
+
+.remote-heading h4 {
+  color: #1f2933;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.remote-heading h4 + p {
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-top: 6px;
+  max-width: 660px;
+}
+
+.remote-kicker {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .participant-actions {
@@ -271,12 +308,45 @@ label {
   color: var(--ink-muted);
   font-size: 13px;
   font-weight: 700;
-  margin-top: 4px;
+  margin-top: 10px;
 }
 
 .custom-field {
   margin-top: 12px;
   max-width: 560px;
+}
+
+.manifest-details,
+.local-import-details {
+  border-top: 1px solid rgba(15, 79, 83, 0.16);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.manifest-details summary,
+.local-import-details summary {
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.manifest-details .source-option {
+  margin-top: 12px;
+}
+
+.local-import-details {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px 16px;
+}
+
+.local-import-details p {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 10px 0 0;
 }
 
 .participant-grid {
@@ -330,6 +400,18 @@ label {
 
 #prepare-remote-btn {
   margin-top: 12px;
+}
+
+.privacy-note {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 10px 0 0;
+}
+
+#prepare-btn {
+  margin-top: 14px;
 }
 
 .upload-card {

@@ -20,9 +20,9 @@
         <div class="panel-heading">
           <div>
             <h2>Session setup</h2>
-            <p>Prepare a blinded listener session for word-level pronunciation ratings.</p>
+            <p>Select uploaded participant recordings and prepare a blinded listener session.</p>
           </div>
-          <div class="setup-status" id="setup-status">Waiting for audio</div>
+          <div class="setup-status" id="setup-status">Loading participants</div>
         </div>
 
         <div class="status-grid" aria-live="polite">
@@ -76,50 +76,65 @@
           </section>
 
           <section class="setup-section">
-            <h3>Materials</h3>
-            <div class="remote-card">
+            <h3>Participant recordings</h3>
+            <div class="remote-card primary-source">
               <div class="remote-heading">
-                <label class="checkbox-label source-option">
-                  <input id="custom-manifest-toggle" type="checkbox" />
-                  Use a custom GitHub manifest
-                </label>
-                <button id="load-participants-btn" class="secondary">Reload participants</button>
+                <div>
+                  <p class="remote-kicker">GitHub audio set</p>
+                  <h4>Choose participant ID(s)</h4>
+                  <p>Recordings are loaded from the uploaded manifest, then blinded and randomized for this rater.</p>
+                </div>
+                <button id="load-participants-btn" class="secondary">Reload participant list</button>
               </div>
               <div class="source-summary" id="source-summary">Default: remote_manifest.csv</div>
-              <label id="custom-manifest-field" class="custom-field hidden">
-                GitHub manifest URL
-                <input id="remote-manifest-url" type="text" autocomplete="off" value="remote_manifest.csv" />
-              </label>
+
+              <details class="manifest-details">
+                <summary>Use a different GitHub manifest</summary>
+                <label class="checkbox-label source-option">
+                  <input id="custom-manifest-toggle" type="checkbox" />
+                  Enable custom manifest URL
+                </label>
+                <label id="custom-manifest-field" class="custom-field hidden">
+                  GitHub manifest URL
+                  <input id="remote-manifest-url" type="text" autocomplete="off" value="remote_manifest.csv" />
+                </label>
+              </details>
+
               <div class="participant-actions">
                 <button id="remote-select-all-btn" class="secondary" disabled>Select all</button>
                 <button id="remote-clear-btn" class="secondary" disabled>Clear</button>
               </div>
               <div id="remote-participant-grid" class="participant-grid empty">Loading participants...</div>
-              <button id="prepare-remote-btn" disabled>Prepare checked participants</button>
-              <small>
-                The default manifest loads automatically. Use the custom option only when rating another uploaded set.
-              </small>
+              <button id="prepare-remote-btn" disabled>Prepare selected participants</button>
+              <p class="privacy-note">
+                Use anonymized participant IDs only. Do not include names, student numbers, or other direct identifiers in uploaded filenames.
+              </p>
             </div>
 
-            <div class="upload-grid">
-              <label class="upload-card">
-                <span>Audio files</span>
-                <input id="audio-files" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg" multiple />
-                <small>Select exported participant recordings.</small>
-              </label>
+            <details class="local-import-details">
+              <summary>Local import / troubleshooting</summary>
+              <p>Use this only for pilot checks or when the uploaded GitHub manifest is not available.</p>
+              <div class="upload-grid">
+                <label class="upload-card">
+                  <span>Audio files</span>
+                  <input id="audio-files" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg" multiple />
+                  <small>Select exported participant recordings.</small>
+                </label>
 
-              <label class="upload-card">
-                <span>Audio folder</span>
-                <input id="audio-folder" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg" webkitdirectory multiple />
-                <small>Import a folder while preserving relative paths.</small>
-              </label>
+                <label class="upload-card">
+                  <span>Audio folder</span>
+                  <input id="audio-folder" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg" webkitdirectory multiple />
+                  <small>Import a folder while preserving relative paths.</small>
+                </label>
 
-              <label class="upload-card">
-                <span>Manifest CSV</span>
-                <input id="manifest-file" type="file" accept=".csv,text/csv" />
-                <small>Optional metadata for targets and conditions.</small>
-              </label>
-            </div>
+                <label class="upload-card">
+                  <span>Manifest CSV</span>
+                  <input id="manifest-file" type="file" accept=".csv,text/csv" />
+                  <small>Optional metadata for targets and conditions.</small>
+                </label>
+              </div>
+              <button id="prepare-btn" class="secondary">Prepare local files</button>
+            </details>
           </section>
         </div>
 
@@ -148,7 +163,6 @@
 
         <div class="actions">
           <button id="load-practice-btn" class="secondary">Load practice samples</button>
-          <button id="prepare-btn">Prepare trials</button>
           <button id="start-btn" disabled>Start rating</button>
           <button id="download-btn" class="secondary" disabled>Download results</button>
         </div>

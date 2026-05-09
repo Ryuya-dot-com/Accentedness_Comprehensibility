@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.2.0";
+  const VERSION = "pronunciation_rating_v0.3.0";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["audio_file", "file", "filename", "path"];
@@ -121,7 +121,7 @@
     } else if (audioCount) {
       setSetupStatus("Rater needed");
     } else {
-      setSetupStatus("Waiting for audio");
+      setSetupStatus("Waiting for uploaded set");
     }
   }
 
@@ -365,7 +365,7 @@
   function syncCustomManifestVisibility() {
     els.customManifestField.classList.toggle("hidden", !els.customManifestToggle.checked);
     els.sourceSummary.textContent = els.customManifestToggle.checked
-      ? "Custom manifest selected"
+      ? "Custom manifest enabled"
       : `Default: ${DEFAULT_REMOTE_MANIFEST_URL}`;
   }
 
@@ -380,7 +380,7 @@
 
     const fileRecords = collectAudioFiles();
     if (!fileRecords.length) {
-      setLog("Upload at least one audio file or audio folder.");
+      setLog("Open Local import / troubleshooting and select at least one audio file or audio folder.");
       setSetupStatus("Audio needed");
       return;
     }
@@ -456,7 +456,7 @@
     finishPreparedItems(rows, `participant_id: ${participantId}`);
   }
 
-  function resetRemoteParticipantSelect(label = "Load participants first") {
+  function resetRemoteParticipantSelect(label = "Load participant list first") {
     els.remoteParticipantGrid.innerHTML = label;
     els.remoteParticipantGrid.classList.add("empty");
     els.remoteSelectAllBtn.disabled = true;
@@ -518,7 +518,7 @@
     els.loadParticipantsBtn.disabled = true;
     els.prepareRemoteBtn.disabled = true;
     resetRemoteParticipantSelect("Loading participants...");
-    setSetupStatus("Loading");
+    setSetupStatus("Loading manifest");
     setLog(`Loading uploaded recordings:\n${manifestInput}`);
 
     const { rows, url } = await fetchCsv(manifestInput);
@@ -542,7 +542,11 @@
     const participants = populateParticipantSelect(usableRows, url);
     els.sourceSummary.textContent = els.customManifestToggle.checked ? `Loaded: ${url}` : `Default loaded: ${DEFAULT_REMOTE_MANIFEST_URL}`;
     updateSelectedMaterialSummary();
-    setSetupStatus(selectedRemoteParticipants().length ? "Rater needed" : "Participant needed");
+    if (selectedRemoteParticipants().length) {
+      setSetupStatus(els.raterId.value.trim() ? "Ready to prepare" : "Rater needed");
+    } else {
+      setSetupStatus("Participant needed");
+    }
     setLog([
       `remote_manifest: ${url}`,
       `usable_rows: ${usableRows.length}`,
@@ -559,13 +563,13 @@
     const participantIds = selectedRemoteParticipants();
     if (!raterId) {
       setSetupStatus("Rater needed");
-      setLog("Enter a rater ID before preparing a participant.");
+      setLog("Enter a rater ID before preparing selected participant recordings.");
       els.raterId.focus();
       return;
     }
     if (!participantIds.length) {
       setSetupStatus("Participant needed");
-      setLog("Check at least one participant ID first.");
+      setLog("Select at least one participant ID from the uploaded GitHub set.");
       els.remoteParticipantGrid.focus();
       return;
     }
@@ -992,8 +996,13 @@
     syncCustomManifestVisibility();
     setLog("");
     updateSetupSummary(0, 0, 0);
-    setSetupStatus("Waiting for audio");
+    setSetupStatus("Loading participants");
     showOnly(els.setupPanel);
+    loadRemoteParticipants().catch((error) => {
+      els.loadParticipantsBtn.disabled = false;
+      setSetupStatus("Remote load failed");
+      setLog(`Remote participant load failed: ${error.message}`);
+    });
   }
 
   function sanitizeName(value) {
