@@ -29,9 +29,9 @@ http://127.0.0.1:8765/Rating_Platform/
 ## Workflow
 
 1. Enter a rater ID and session label.
-2. Either load a GitHub manifest and select a participant ID, or upload local WAV files.
+2. Check participant ID(s) from the automatically loaded GitHub manifest, or upload local WAV files.
 3. Optionally upload a local manifest CSV with metadata.
-4. Click `Prepare selected participant` for GitHub audio, or `Prepare trials` for local audio.
+4. Click `Prepare checked participants` for GitHub audio, or `Prepare trials` for local audio.
 5. Click `Start rating`.
 6. Choose a task mode:
    - `Combined`: collect ratings and dictation in the same trial.
@@ -42,7 +42,7 @@ http://127.0.0.1:8765/Rating_Platform/
 
 ## GitHub Audio Workflow
 
-Use `remote_manifest.csv` when participant recordings are already uploaded to GitHub or GitHub Pages. The setup screen reads this CSV, lists the available `participant_id` values, and prepares only the selected participant's files for the current rater.
+Use `remote_manifest.csv` when participant recordings are already uploaded to GitHub or GitHub Pages. The default manifest loads automatically, the setup screen lists available `participant_id` values as checkboxes, and the rater prepares only the checked participants. A custom manifest URL is available through the `Use a custom GitHub manifest` option.
 
 Recommended GitHub Pages layout:
 
@@ -77,11 +77,9 @@ https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness/main/Rating_Platfor
 Rater flow:
 
 1. Enter `Rater ID`.
-2. Enter the manifest URL, such as `remote_manifest.csv` or a raw GitHub URL.
-3. Click `Load participants`.
-4. Select a `Participant ID`.
-5. Click `Prepare selected participant`.
-6. Start rating.
+2. Check one or more `Participant ID` values.
+3. Click `Prepare checked participants`.
+4. Start rating.
 
 The downloaded CSV and assignment JSON include `audio_url`, `source_path`, and `participant_id` so the rated material can be audited later. See `remote_manifest_template.csv` for a minimal template.
 

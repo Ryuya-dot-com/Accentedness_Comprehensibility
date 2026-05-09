@@ -225,6 +225,16 @@ label {
   gap: 7px;
 }
 
+.checkbox-label {
+  align-items: center;
+  display: flex;
+  gap: 9px;
+}
+
+.checkbox-label input {
+  inline-size: auto;
+}
+
 .upload-grid {
   display: grid;
   gap: 16px;
@@ -239,17 +249,75 @@ label {
   padding: 16px;
 }
 
-.remote-fields {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(240px, 2fr) minmax(180px, 1fr);
-}
-
-.remote-actions {
+.remote-heading,
+.participant-actions {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 14px;
+  justify-content: space-between;
+}
+
+.participant-actions {
+  justify-content: flex-start;
+  margin-top: 12px;
+}
+
+.source-option {
+  min-height: 44px;
+}
+
+.source-summary {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.custom-field {
+  margin-top: 12px;
+  max-width: 560px;
+}
+
+.participant-grid {
+  background: #f7fafb;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 12px;
+  max-height: 240px;
+  overflow: auto;
+  padding: 12px;
+}
+
+.participant-grid.empty {
+  color: var(--ink-muted);
+  display: block;
+  font-weight: 700;
+}
+
+.participant-option {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dce3eb;
+  border-radius: 6px;
+  display: flex;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 10px;
+}
+
+.participant-option input {
+  inline-size: auto;
+}
+
+.participant-option span {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
 }
 
 .remote-card small {
@@ -258,6 +326,10 @@ label {
   font-weight: 600;
   line-height: 1.4;
   margin-top: 10px;
+}
+
+#prepare-remote-btn {
+  margin-top: 12px;
 }
 
 .upload-card {
@@ -489,7 +561,7 @@ label {
 
   .form-grid,
   .upload-grid,
-  .remote-fields,
+  .participant-grid,
   .anchor-grid,
   .status-grid,
   .rating-workspace {

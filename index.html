@@ -78,24 +78,26 @@
           <section class="setup-section">
             <h3>Materials</h3>
             <div class="remote-card">
-              <div class="remote-fields">
-                <label>
-                  GitHub manifest URL
-                  <input id="remote-manifest-url" type="text" autocomplete="off" value="remote_manifest.csv" />
+              <div class="remote-heading">
+                <label class="checkbox-label source-option">
+                  <input id="custom-manifest-toggle" type="checkbox" />
+                  Use a custom GitHub manifest
                 </label>
-                <label>
-                  Participant ID
-                  <select id="participant-select" disabled>
-                    <option value="">Load participants first</option>
-                  </select>
-                </label>
+                <button id="load-participants-btn" class="secondary">Reload participants</button>
               </div>
-              <div class="remote-actions">
-                <button id="load-participants-btn" class="secondary">Load participants</button>
-                <button id="prepare-remote-btn" disabled>Prepare selected participant</button>
+              <div class="source-summary" id="source-summary">Default: remote_manifest.csv</div>
+              <label id="custom-manifest-field" class="custom-field hidden">
+                GitHub manifest URL
+                <input id="remote-manifest-url" type="text" autocomplete="off" value="remote_manifest.csv" />
+              </label>
+              <div class="participant-actions">
+                <button id="remote-select-all-btn" class="secondary" disabled>Select all</button>
+                <button id="remote-clear-btn" class="secondary" disabled>Clear</button>
               </div>
+              <div id="remote-participant-grid" class="participant-grid empty">Loading participants...</div>
+              <button id="prepare-remote-btn" disabled>Prepare checked participants</button>
               <small>
-                Use a manifest committed to GitHub Pages, or a raw GitHub URL, to stream uploaded recordings directly.
+                The default manifest loads automatically. Use the custom option only when rating another uploaded set.
               </small>
             </div>
 

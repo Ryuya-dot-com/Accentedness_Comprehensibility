@@ -1,7 +1,8 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.1.0";
+  const VERSION = "pronunciation_rating_v0.2.0";
+  const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["audio_file", "file", "filename", "path"];
   const REMOTE_AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
@@ -26,8 +27,13 @@
     audioFiles: document.getElementById("audio-files"),
     audioFolder: document.getElementById("audio-folder"),
     manifestFile: document.getElementById("manifest-file"),
+    customManifestToggle: document.getElementById("custom-manifest-toggle"),
+    customManifestField: document.getElementById("custom-manifest-field"),
+    sourceSummary: document.getElementById("source-summary"),
     remoteManifestUrl: document.getElementById("remote-manifest-url"),
-    participantSelect: document.getElementById("participant-select"),
+    remoteParticipantGrid: document.getElementById("remote-participant-grid"),
+    remoteSelectAllBtn: document.getElementById("remote-select-all-btn"),
+    remoteClearBtn: document.getElementById("remote-clear-btn"),
     loadParticipantsBtn: document.getElementById("load-participants-btn"),
     prepareRemoteBtn: document.getElementById("prepare-remote-btn"),
     loadPracticeBtn: document.getElementById("load-practice-btn"),
@@ -106,8 +112,11 @@
     const targetCount = state.items.filter((item) => item.target_word).length ||
       state.remoteRows.filter((row) => valueFrom(row, ["target_word", "word", "item", "expected_word"])).length;
     const manifestCount = state.manifestRows.length || state.remoteRows.length || (els.manifestFile.files[0] ? "selected" : 0);
+    const remoteSelectionNeeded = state.remoteRows.length > 0 && selectedRemoteParticipants().length === 0;
     updateSetupSummary(audioCount, targetCount, manifestCount);
-    if (audioCount && els.raterId.value.trim() && els.sessionId.value.trim()) {
+    if (remoteSelectionNeeded) {
+      setSetupStatus("Participant needed");
+    } else if (audioCount && els.raterId.value.trim()) {
       setSetupStatus("Ready to prepare");
     } else if (audioCount) {
       setSetupStatus("Rater needed");
@@ -337,7 +346,7 @@
   }
 
   async function fetchCsv(url) {
-    const resolvedUrl = resolveUrl(url || "remote_manifest.csv");
+    const resolvedUrl = resolveUrl(url || DEFAULT_REMOTE_MANIFEST_URL);
     const response = await fetch(resolvedUrl, { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`Could not load ${resolvedUrl} (${response.status})`);
@@ -346,6 +355,18 @@
       rows: parseCsv(await response.text()),
       url: resolvedUrl,
     };
+  }
+
+  function remoteManifestInput() {
+    if (!els.customManifestToggle.checked) return DEFAULT_REMOTE_MANIFEST_URL;
+    return els.remoteManifestUrl.value.trim() || DEFAULT_REMOTE_MANIFEST_URL;
+  }
+
+  function syncCustomManifestVisibility() {
+    els.customManifestField.classList.toggle("hidden", !els.customManifestToggle.checked);
+    els.sourceSummary.textContent = els.customManifestToggle.checked
+      ? "Custom manifest selected"
+      : `Default: ${DEFAULT_REMOTE_MANIFEST_URL}`;
   }
 
   async function prepareTrials() {
@@ -436,10 +457,24 @@
   }
 
   function resetRemoteParticipantSelect(label = "Load participants first") {
-    els.participantSelect.innerHTML = "";
-    els.participantSelect.append(new Option(label, ""));
-    els.participantSelect.disabled = true;
+    els.remoteParticipantGrid.innerHTML = label;
+    els.remoteParticipantGrid.classList.add("empty");
+    els.remoteSelectAllBtn.disabled = true;
+    els.remoteClearBtn.disabled = true;
     els.prepareRemoteBtn.disabled = true;
+  }
+
+  function selectedRemoteParticipants() {
+    return [...els.remoteParticipantGrid.querySelectorAll("input:checked")].map((input) => input.value);
+  }
+
+  function updateRemoteParticipantActions() {
+    const inputs = els.remoteParticipantGrid.querySelectorAll("input");
+    const selected = selectedRemoteParticipants();
+    els.remoteSelectAllBtn.disabled = inputs.length === 0;
+    els.remoteClearBtn.disabled = inputs.length === 0;
+    els.prepareRemoteBtn.disabled = selected.length === 0;
+    updateSelectedMaterialSummary();
   }
 
   function populateParticipantSelect(rows, manifestUrl) {
@@ -454,33 +489,37 @@
     const participants = [...counts.entries()]
       .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
 
-    els.participantSelect.innerHTML = "";
-    els.participantSelect.append(new Option("Select participant", ""));
+    els.remoteParticipantGrid.innerHTML = "";
+    els.remoteParticipantGrid.classList.toggle("empty", participants.length === 0);
+    if (!participants.length) {
+      els.remoteParticipantGrid.textContent = "No participants found.";
+    }
     participants.forEach(([participantId, count]) => {
-      els.participantSelect.append(new Option(`${participantId} (${count} files)`, participantId));
+      const label = document.createElement("label");
+      label.className = "participant-option";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.value = participantId;
+      input.checked = participants.length === 1;
+      input.addEventListener("change", updateRemoteParticipantActions);
+      const text = document.createTextNode(participantId);
+      const meta = document.createElement("span");
+      meta.textContent = `${count} files`;
+      label.append(input, text, meta);
+      els.remoteParticipantGrid.append(label);
     });
 
-    const hasParticipants = participants.length > 0;
-    els.participantSelect.disabled = !hasParticipants;
-    els.prepareRemoteBtn.disabled = true;
+    updateRemoteParticipantActions();
     return participants;
   }
 
   async function loadRemoteParticipants() {
-    const raterId = els.raterId.value.trim();
-    if (!raterId) {
-      setSetupStatus("Rater needed");
-      setLog("Enter a rater ID before loading GitHub audio.");
-      els.raterId.focus();
-      return;
-    }
-
-    const manifestInput = els.remoteManifestUrl.value.trim() || "remote_manifest.csv";
+    const manifestInput = remoteManifestInput();
     els.loadParticipantsBtn.disabled = true;
     els.prepareRemoteBtn.disabled = true;
     resetRemoteParticipantSelect("Loading participants...");
     setSetupStatus("Loading");
-    setLog(`Loading remote manifest:\n${manifestInput}`);
+    setLog(`Loading uploaded recordings:\n${manifestInput}`);
 
     const { rows, url } = await fetchCsv(manifestInput);
     const usableRows = rows.filter((row) => participantIdFromRow(row) && remoteAudioUrlFromRow(row, url));
@@ -501,8 +540,9 @@
     resetDownload();
     els.startBtn.disabled = true;
     const participants = populateParticipantSelect(usableRows, url);
+    els.sourceSummary.textContent = els.customManifestToggle.checked ? `Loaded: ${url}` : `Default loaded: ${DEFAULT_REMOTE_MANIFEST_URL}`;
     updateSelectedMaterialSummary();
-    setSetupStatus("Participant needed");
+    setSetupStatus(selectedRemoteParticipants().length ? "Rater needed" : "Participant needed");
     setLog([
       `remote_manifest: ${url}`,
       `usable_rows: ${usableRows.length}`,
@@ -516,34 +556,37 @@
 
   function prepareSelectedRemoteParticipant() {
     const raterId = els.raterId.value.trim();
-    const participantId = els.participantSelect.value;
+    const participantIds = selectedRemoteParticipants();
     if (!raterId) {
       setSetupStatus("Rater needed");
       setLog("Enter a rater ID before preparing a participant.");
       els.raterId.focus();
       return;
     }
-    if (!participantId) {
+    if (!participantIds.length) {
       setSetupStatus("Participant needed");
-      setLog("Select a participant ID first.");
-      els.participantSelect.focus();
+      setLog("Check at least one participant ID first.");
+      els.remoteParticipantGrid.focus();
       return;
     }
     if (!els.sessionId.value.trim()) {
-      els.sessionId.value = `participant_${sanitizeName(participantId)}`;
+      els.sessionId.value = participantIds.length === 1
+        ? `participant_${sanitizeName(participantIds[0])}`
+        : `participants_${participantIds.length}_${new Date().toISOString().slice(0, 10)}`;
     }
 
-    const manifestUrl = state.remoteManifestUrl || resolveUrl(els.remoteManifestUrl.value.trim() || "remote_manifest.csv");
-    const selectedRows = state.remoteRows.filter((row) => participantIdFromRow(row) === participantId);
+    const manifestUrl = state.remoteManifestUrl || resolveUrl(remoteManifestInput());
+    const participantSet = new Set(participantIds);
+    const selectedRows = state.remoteRows.filter((row) => participantSet.has(participantIdFromRow(row)));
     const playableRows = selectedRows.filter((row) => remoteAudioUrlFromRow(row, manifestUrl));
     if (!playableRows.length) {
       setSetupStatus("Audio needed");
-      setLog(`No playable audio rows were found for participant_id: ${participantId}`);
+      setLog(`No playable audio rows were found for participant_id: ${participantIds.join(", ")}`);
       return;
     }
 
     state.manifestRows = playableRows;
-    prepareRemoteRows(playableRows, manifestUrl, participantId);
+    prepareRemoteRows(playableRows, manifestUrl, participantIds.join(", "));
   }
 
   function finishPreparedItems(manifestRows, extraLogLine = "") {
@@ -946,6 +989,7 @@
     els.audioFolder.value = "";
     els.manifestFile.value = "";
     resetRemoteParticipantSelect();
+    syncCustomManifestVisibility();
     setLog("");
     updateSetupSummary(0, 0, 0);
     setSetupStatus("Waiting for audio");
@@ -974,10 +1018,32 @@
       setLog(`Remote participant load failed: ${error.message}`);
     });
   });
-  els.participantSelect.addEventListener("change", () => {
-    els.prepareRemoteBtn.disabled = !els.participantSelect.value;
+  els.customManifestToggle.addEventListener("change", syncCustomManifestVisibility);
+  els.remoteManifestUrl.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      loadRemoteParticipants().catch((error) => {
+        els.loadParticipantsBtn.disabled = false;
+        setSetupStatus("Remote load failed");
+        setLog(`Remote participant load failed: ${error.message}`);
+      });
+    }
+  });
+  els.remoteSelectAllBtn.addEventListener("click", () => {
+    els.remoteParticipantGrid.querySelectorAll("input").forEach((input) => {
+      input.checked = true;
+    });
+    updateRemoteParticipantActions();
+  });
+  els.remoteClearBtn.addEventListener("click", () => {
+    els.remoteParticipantGrid.querySelectorAll("input").forEach((input) => {
+      input.checked = false;
+    });
+    updateRemoteParticipantActions();
   });
   els.prepareRemoteBtn.addEventListener("click", prepareSelectedRemoteParticipant);
+  els.raterId.addEventListener("input", updateSelectedMaterialSummary);
+  els.sessionId.addEventListener("input", updateSelectedMaterialSummary);
   els.loadPracticeBtn.addEventListener("click", () => {
     loadPracticeSamples().catch((error) => {
       els.loadPracticeBtn.disabled = false;
@@ -1006,6 +1072,12 @@
   els.audioFolder.addEventListener("change", updateSelectedMaterialSummary);
   els.manifestFile.addEventListener("change", updateSelectedMaterialSummary);
   els.breakInterval.value = String(DEFAULT_BREAK_INTERVAL);
+  syncCustomManifestVisibility();
   updateSelectedMaterialSummary();
+  loadRemoteParticipants().catch((error) => {
+    els.loadParticipantsBtn.disabled = false;
+    setSetupStatus("Remote load failed");
+    setLog(`Remote participant load failed: ${error.message}`);
+  });
   renderScales();
 })();
