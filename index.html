@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pronunciation Rating Platform</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="header">
+        <div>
+          <p class="eyebrow">Accentedness project</p>
+          <h1>Pronunciation Rating Platform</h1>
+        </div>
+        <div class="version" id="version-label"></div>
+      </header>
+
+      <section class="panel setup-panel" id="setup-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Session setup</h2>
+            <p>Prepare a blinded listener session for word-level pronunciation ratings.</p>
+          </div>
+          <div class="setup-status" id="setup-status">Waiting for audio</div>
+        </div>
+
+        <div class="status-grid" aria-live="polite">
+          <div>
+            <span>Audio</span>
+            <strong id="status-audio">0</strong>
+          </div>
+          <div>
+            <span>Targets</span>
+            <strong id="status-targets">0</strong>
+          </div>
+          <div>
+            <span>Manifest</span>
+            <strong id="status-manifest">none</strong>
+          </div>
+          <div>
+            <span>Mode</span>
+            <strong id="status-mode">combined</strong>
+          </div>
+        </div>
+
+        <div class="setup-layout">
+          <section class="setup-section">
+            <h3>Rater</h3>
+            <div class="form-grid">
+              <label>
+                Rater ID
+                <input id="rater-id" type="text" autocomplete="off" placeholder="rater001" />
+              </label>
+              <label>
+                Session label
+                <input id="session-id" type="text" autocomplete="off" placeholder="session01" />
+              </label>
+              <label>
+                Randomization seed
+                <input id="seed" type="text" autocomplete="off" placeholder="defaults to rater + session" />
+              </label>
+              <label>
+                Task mode
+                <select id="task-mode">
+                  <option value="combined">Combined: ratings + dictation</option>
+                  <option value="ratings">Ratings only</option>
+                  <option value="dictation">Dictation only</option>
+                </select>
+              </label>
+              <label>
+                Break interval
+                <input id="break-interval" type="number" min="0" max="200" value="40" />
+              </label>
+            </div>
+          </section>
+
+          <section class="setup-section">
+            <h3>Materials</h3>
+            <div class="remote-card">
+              <div class="remote-fields">
+                <label>
+                  GitHub manifest URL
+                  <input id="remote-manifest-url" type="text" autocomplete="off" value="remote_manifest.csv" />
+                </label>
+                <label>
+                  Participant ID
+                  <select id="participant-select" disabled>
+                    <option value="">Load participants first</option>
+                  </select>
+                </label>
+              </div>
+              <div class="remote-actions">
+                <button id="load-participants-btn" class="secondary">Load participants</button>
+                <button id="prepare-remote-btn" disabled>Prepare selected participant</button>
+              </div>
+              <small>
+                Use a manifest committed to GitHub Pages, or a raw GitHub URL, to stream uploaded recordings directly.
+              </small>
+            </div>
+
+            <div class="upload-grid">
+              <label class="upload-card">
+                <span>Audio files</span>
+                <input id="audio-files" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg" multiple />
+                <small>Select exported participant recordings.</small>
+              </label>
+
+              <label class="upload-card">
+                <span>Audio folder</span>
+                <input id="audio-folder" type="file" accept="audio/*,.wav,.mp3,.m4a,.ogg" webkitdirectory multiple />
+                <small>Import a folder while preserving relative paths.</small>
+              </label>
+
+              <label class="upload-card">
+                <span>Manifest CSV</span>
+                <input id="manifest-file" type="file" accept=".csv,text/csv" />
+                <small>Optional metadata for targets and conditions.</small>
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <details class="scale-details">
+          <summary>Scale anchors shown to raters</summary>
+          <div class="anchor-grid">
+            <div>
+              <h3>Comprehensibility</h3>
+              <p>How much effort does it take to understand the word?</p>
+              <p><strong>1</strong> = very easy to understand</p>
+              <p><strong>10</strong> = extremely difficult to understand</p>
+            </div>
+            <div>
+              <h3>Accentedness</h3>
+              <p>How strongly is the word influenced by a non-native accent?</p>
+              <p><strong>1</strong> = no noticeable accent</p>
+              <p><strong>10</strong> = extremely strong accent</p>
+            </div>
+            <div>
+              <h3>Intelligibility</h3>
+              <p>Type the spelling of the word you hear as quickly and accurately as possible.</p>
+              <p>Exact spelling is auto-scored when a target word is available.</p>
+            </div>
+          </div>
+        </details>
+
+        <div class="actions">
+          <button id="load-practice-btn" class="secondary">Load practice samples</button>
+          <button id="prepare-btn">Prepare trials</button>
+          <button id="start-btn" disabled>Start rating</button>
+          <button id="download-btn" class="secondary" disabled>Download results</button>
+        </div>
+
+        <pre id="setup-log" class="log" aria-live="polite"></pre>
+      </section>
+
+      <section class="panel task-panel hidden" id="task-panel">
+        <div class="task-topbar">
+          <div>
+            <p class="eyebrow" id="task-phase">Main task</p>
+            <h2 id="trial-title">Trial</h2>
+          </div>
+          <button id="pause-btn" class="secondary">Pause</button>
+        </div>
+
+        <div class="progress-track" aria-hidden="true">
+          <div id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0 of 0 completed</div>
+
+        <div class="rating-workspace">
+          <aside class="trial-rail" aria-live="polite">
+            <div>
+              <span>Mode</span>
+              <strong id="rail-mode">Combined</strong>
+            </div>
+            <div>
+              <span>Completed</span>
+              <strong id="rail-completed">0</strong>
+            </div>
+            <div>
+              <span>Remaining</span>
+              <strong id="rail-remaining">0</strong>
+            </div>
+            <div>
+              <span>Audio</span>
+              <strong id="rail-audio">Pending</strong>
+            </div>
+          </aside>
+
+          <div class="response-stack">
+            <div class="stimulus-area">
+              <button id="play-btn" class="play-button">Play audio</button>
+              <p id="audio-state" class="audio-state">Audio has not been played.</p>
+            </div>
+
+            <label class="dictation-box" id="dictation-block">
+              Word heard
+              <input id="dictation-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" disabled />
+            </label>
+
+            <fieldset class="scale-block" id="comprehensibility-block">
+              <legend>Comprehensibility</legend>
+              <div class="scale-endpoints">
+                <span>Very easy</span>
+                <span>Extremely difficult</span>
+              </div>
+              <div class="scale-options" id="comprehensibility-scale"></div>
+            </fieldset>
+
+            <fieldset class="scale-block" id="accentedness-block">
+              <legend>Accentedness</legend>
+              <div class="scale-endpoints">
+                <span>No noticeable accent</span>
+                <span>Extremely strong accent</span>
+              </div>
+              <div class="scale-options" id="accentedness-scale"></div>
+            </fieldset>
+          </div>
+        </div>
+
+        <div class="trial-actions">
+          <button id="next-btn" disabled>Save and continue</button>
+        </div>
+      </section>
+
+      <section class="panel break-panel hidden" id="break-panel">
+        <h2>Break</h2>
+        <p id="break-message"></p>
+        <button id="resume-btn">Resume</button>
+      </section>
+
+      <section class="panel complete-panel hidden" id="complete-panel">
+        <h2>Session complete</h2>
+        <p id="complete-message"></p>
+        <div class="actions">
+          <button id="final-download-btn">Download results</button>
+          <button id="new-session-btn" class="secondary">New session</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
