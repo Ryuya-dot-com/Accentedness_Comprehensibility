@@ -46,6 +46,14 @@ Local WAV import remains available under `Local import / troubleshooting`, but i
 
 Use `remote_manifest.csv` when participant recordings are already uploaded to GitHub or GitHub Pages. The default manifest loads automatically, the setup screen lists available `participant_id` values as checkboxes, and the rater prepares only the checked participants. A custom manifest URL is available through `Use a different GitHub manifest`.
 
+For recordings collected with `Accentedness_Tests`, generate this file from the `Accentedness_Tests` repository root with:
+
+```bash
+python3 scripts/build_downstream_manifests.py path/to/*_tests_vocabulary_task_results.zip -o downstream_upload
+```
+
+Then copy `downstream_upload/remote_manifest.csv` and `downstream_upload/recordings/` into this repository or another static host.
+
 Recommended GitHub Pages layout:
 
 ```text
