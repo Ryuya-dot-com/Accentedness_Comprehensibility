@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.3.1";
+  const VERSION = "pronunciation_rating_v0.3.2";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -77,6 +77,7 @@
     currentUrl: null,
     currentAudio: null,
     audioStartMs: null,
+    audioEnded: false,
     playedAtIso: "",
     firstKeyRtMs: null,
     replayCount: 0,
@@ -668,6 +669,12 @@
     });
   }
 
+  function setScaleDisabled(name, disabled) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach((input) => {
+      input.disabled = disabled;
+    });
+  }
+
   function startSession() {
     state.running = true;
     els.startBtn.disabled = true;
@@ -679,6 +686,7 @@
     cleanupAudio();
     state.currentIndex = index;
     state.audioStartMs = null;
+    state.audioEnded = false;
     state.playedAtIso = "";
     state.firstKeyRtMs = null;
     state.replayCount = 0;
@@ -734,10 +742,11 @@
     state.currentAudio = audio;
     state.replayCount += state.audioStartMs ? 1 : 0;
 
-    if (requiresDictation()) {
-      els.dictationInput.disabled = false;
-      els.dictationInput.focus();
-    }
+    state.audioEnded = false;
+    els.dictationInput.disabled = true;
+    setScaleDisabled("comprehensibility", true);
+    setScaleDisabled("accentedness", true);
+    updateNextState();
     els.playBtn.disabled = true;
     els.audioState.textContent = "Playing...";
     els.railAudio.textContent = "Playing";
@@ -745,15 +754,26 @@
     state.playedAtIso = new Date().toISOString();
 
     audio.addEventListener("ended", () => {
+      state.audioEnded = true;
+      if (requiresDictation()) {
+        els.dictationInput.disabled = false;
+        els.dictationInput.focus();
+      }
+      if (requiresRatings()) {
+        setScaleDisabled("comprehensibility", false);
+        setScaleDisabled("accentedness", false);
+      }
       els.audioState.textContent = "Audio played once. Complete the response fields.";
       els.railAudio.textContent = "Played";
       updateNextState();
     }, { once: true });
 
     audio.addEventListener("error", () => {
+      state.audioEnded = false;
       els.audioState.textContent = "This audio file could not be played.";
       els.railAudio.textContent = "Error";
       els.playBtn.disabled = false;
+      updateNextState();
     }, { once: true });
 
     await audio.play();
@@ -765,7 +785,7 @@
   }
 
   function updateNextState() {
-    const played = Boolean(state.audioStartMs);
+    const played = state.audioEnded;
     const dictationReady = !requiresDictation() || Boolean(els.dictationInput.value.trim());
     const ratingReady = !requiresRatings() || Boolean(
       selectedScale("comprehensibility") &&
@@ -793,6 +813,8 @@
       els.dictationInput.value = "";
       els.dictationInput.disabled = true;
     }
+    setScaleDisabled("comprehensibility", !ratings || !state.audioEnded);
+    setScaleDisabled("accentedness", !ratings || !state.audioEnded);
   }
 
   function saveTrialAndAdvance() {
