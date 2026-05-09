@@ -1,10 +1,10 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.3.0";
+  const VERSION = "pronunciation_rating_v0.3.1";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
-  const REQUIRED_MANIFEST_FILE_COLUMNS = ["audio_file", "file", "filename", "path"];
+  const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
   const REMOTE_AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const DEFAULT_BREAK_INTERVAL = 40;
 

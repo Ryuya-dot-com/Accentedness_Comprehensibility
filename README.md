@@ -101,6 +101,7 @@ Use a manifest when filenames do not include enough metadata or when you want to
 Supported column names include:
 
 - `audio_file`, `file`, `filename`, or `path`
+- `recording_file`
 - `audio_url`, `url`, `source_url`, or `raw_url`
 - `target_word`, `word`, `item`, or `expected_word`
 - `participant_id`, `participant`, `speaker_id`, or `speaker`
