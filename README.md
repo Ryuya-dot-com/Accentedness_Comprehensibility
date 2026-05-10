@@ -40,7 +40,7 @@ Raters do not choose a session label, randomization seed, task mode, or conditio
 
 Use Google Chrome for data collection. The platform disables practice and rating preparation outside Chrome. If the rater tries to leave or switch away during a running session, the browser shows a warning. Audio can be replayed within a trial, and replay counts are written to the output.
 
-Local WAV import remains available under `Technical fallback`, but it is intended for pilot checks or recovery when the uploaded manifest is unavailable. Practice samples are loaded from the required `Practice` section.
+Local audio import remains available under `Technical fallback`, but it is intended for pilot checks or recovery when the uploaded manifest is unavailable. Practice samples are loaded from the required `Practice` section.
 
 ## GitHub Audio Workflow
 
@@ -62,26 +62,26 @@ Accentedness_Comprehensibility/
   remote_manifest.csv
   recordings/
     001/
-      001_production_001_icicle.wav
-      001_production_002_acorn.wav
+      001_production_001_icicle.mp3
+      001_production_002_acorn.mp3
     002/
-      002_production_001_icicle.wav
+      002_production_001_icicle.mp3
 ```
 
 In this layout, `remote_manifest.csv` can use relative paths:
 
 ```csv
 audio_file,target_word,participant_id,native_language,condition
-recordings/001/001_production_001_icicle.wav,icicle,001,japanese,production
-recordings/001/001_production_002_acorn.wav,acorn,001,japanese,production
-recordings/002/002_production_001_icicle.wav,icicle,002,chinese,production
+recordings/001/001_production_001_icicle.mp3,icicle,001,japanese,production
+recordings/001/001_production_002_acorn.mp3,acorn,001,japanese,production
+recordings/002/002_production_001_icicle.mp3,icicle,002,chinese,production
 ```
 
 You can also use an absolute `audio_url` column for raw GitHub or another static host:
 
 ```csv
 audio_url,target_word,participant_id,native_language,condition
-https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness_Comprehensibility/main/recordings/001/001_production_001_icicle.wav,icicle,001,japanese,production
+https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness_Comprehensibility/main/recordings/001/001_production_001_icicle.mp3,icicle,001,japanese,production
 ```
 
 Rater flow:
@@ -101,8 +101,8 @@ Important: uploaded participant recordings must be anonymized before publication
 For the GitHub workflow, the manifest is required because it tells the platform which uploaded audio files belong to each participant. For local import only, the platform can infer target words from these existing filename patterns:
 
 ```text
-001_production_001_icicle.wav
-001_japanese_pass01_natural_english_word001_icicle_take01_trial0001_talker_m1_guy.wav
+001_production_001_icicle.mp3
+001_japanese_pass01_natural_english_word001_icicle_take01_trial0001_talker_m1_guy.mp3
 ```
 
 Use a manifest when filenames do not include enough metadata or when you want to preserve experimental condition labels.
@@ -135,9 +135,9 @@ bash scripts/generate_practice_accent_audio.sh
 This creates:
 
 ```text
-practice_audio/english/{chocolate,coffee,pizza,sofa}.wav
-practice_audio/japanese/{chocolate,coffee,pizza,sofa}.wav
-practice_audio/chinese/{chocolate,coffee,pizza,sofa}.wav
+practice_audio/english/{chocolate,coffee,pizza,sofa}.mp3
+practice_audio/japanese/{chocolate,coffee,pizza,sofa}.mp3
+practice_audio/chinese/{chocolate,coffee,pizza,sofa}.mp3
 practice_manifest.csv
 ```
 

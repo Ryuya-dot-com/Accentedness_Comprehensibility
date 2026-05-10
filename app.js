@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.3.5";
+  const VERSION = "pronunciation_rating_v0.3.6";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -361,7 +361,7 @@
     return candidate ? resolveUrl(candidate, manifestUrl) : "";
   }
 
-  function displayFileNameFromSource(sourcePath, fallback = "audio.wav") {
+  function displayFileNameFromSource(sourcePath, fallback = "audio.mp3") {
     const key = fileKey(sourcePath);
     return key || fallback;
   }
@@ -463,7 +463,7 @@
     state.items = rows.map((row, index) => {
       const audioUrl = remoteAudioUrlFromRow(row, manifestUrl);
       const sourcePath = valueFrom(row, REQUIRED_MANIFEST_FILE_COLUMNS) || audioUrl;
-      const fileName = displayFileNameFromSource(sourcePath || audioUrl, `remote_${String(index + 1).padStart(3, "0")}.wav`);
+      const fileName = displayFileNameFromSource(sourcePath || audioUrl, `remote_${String(index + 1).padStart(3, "0")}.mp3`);
       const parsed = parseRecordingName(fileName);
       const targetWord = valueFrom(row, ["target_word", "word", "item", "expected_word"]) || parsed.target_word || "";
       return {
@@ -1105,7 +1105,9 @@
         throw new Error(`Could not load ${audioPath} (${response.status})`);
       }
       const blob = await response.blob();
-      const file = new File([blob], fileKey(audioPath), { type: blob.type || "audio/wav" });
+      const audioName = fileKey(audioPath);
+      const fallbackType = audioName.toLowerCase().endsWith(".mp3") ? "audio/mpeg" : "audio/wav";
+      const file = new File([blob], audioName, { type: blob.type || fallbackType });
       fileRecords.push({ file, sourcePath: audioPath });
     }
     return { manifestRows, fileRecords };

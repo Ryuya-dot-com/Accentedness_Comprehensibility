@@ -1,4 +1,4 @@
 audio_file,audio_url,target_word,participant_id,native_language,condition,accent_condition,talker,pass_number,trial_number,word_number,take_number,spoken_form,practice_note
-recordings/001/001_production_001_icicle.wav,,icicle,001,japanese,production,japanese,j1,,1,1,,,
-recordings/001/001_production_002_acorn.wav,,acorn,001,japanese,production,japanese,j2,,2,2,,,
-recordings/002/002_production_001_icicle.wav,,icicle,002,chinese,production,chinese,c1,,1,1,,,
+recordings/001/001_production_001_icicle.mp3,,icicle,001,japanese,production,japanese,j1,,1,1,,,
+recordings/001/001_production_002_acorn.mp3,,acorn,001,japanese,production,japanese,j2,,2,2,,,
+recordings/002/002_production_001_icicle.mp3,,icicle,002,chinese,production,chinese,c1,,1,1,,,
