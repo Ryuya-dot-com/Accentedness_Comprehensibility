@@ -756,13 +756,58 @@ label small {
   min-width: 180px;
 }
 
+.audio-response-panel {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  justify-self: stretch;
+  padding: 14px;
+}
+
+.response-kicker {
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  margin: 0;
+  text-transform: uppercase;
+}
+
 .dictation-box {
+  display: grid;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
 .dictation-box input {
   font-size: 22px;
   min-height: 54px;
+}
+
+.dictation-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dictation-options button {
+  min-height: 42px;
+}
+
+.dictation-options button[data-selected="true"] {
+  background: #edf8f8;
+  border-color: #7db4bb;
+  color: var(--accent-strong);
+}
+
+.dictation-status {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
 }
 
 .scale-block {

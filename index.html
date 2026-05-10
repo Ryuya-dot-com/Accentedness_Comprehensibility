@@ -288,12 +288,29 @@
             <div class="stimulus-area">
               <button id="play-btn" class="play-button">Play audio</button>
               <p id="audio-state" class="audio-state">Audio has not been played.</p>
+              <div class="audio-response-panel">
+                <p class="response-kicker">Response options</p>
+                <div class="dictation-options" aria-label="Audio response options">
+                  <button id="dictation-unintelligible-btn" type="button" class="secondary" disabled>
+                    Could not identify the word
+                  </button>
+                  <button id="dictation-no-speech-btn" type="button" class="secondary" disabled>
+                    No speech or silent audio
+                  </button>
+                  <button id="dictation-clear-btn" type="button" class="secondary hidden" disabled>
+                    Clear selection
+                  </button>
+                </div>
+                <p id="dictation-status" class="dictation-status">
+                  Play the full audio before typing, rating, or selecting an option.
+                </p>
+              </div>
             </div>
 
-            <label class="dictation-box" id="dictation-block">
-              Word heard
+            <div class="dictation-box" id="dictation-block">
+              <label for="dictation-input">Word heard</label>
               <input id="dictation-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" disabled />
-            </label>
+            </div>
 
             <fieldset class="scale-block" id="comprehensibility-block">
               <legend>Comprehensibility</legend>

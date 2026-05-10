@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.4.1";
+  const VERSION = "pronunciation_rating_v0.4.2";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -79,6 +79,10 @@
     audioState: document.getElementById("audio-state"),
     dictationBlock: document.getElementById("dictation-block"),
     dictationInput: document.getElementById("dictation-input"),
+    dictationUnintelligibleBtn: document.getElementById("dictation-unintelligible-btn"),
+    dictationNoSpeechBtn: document.getElementById("dictation-no-speech-btn"),
+    dictationClearBtn: document.getElementById("dictation-clear-btn"),
+    dictationStatus: document.getElementById("dictation-status"),
     comprehensibilityBlock: document.getElementById("comprehensibility-block"),
     comprehensibilityScale: document.getElementById("comprehensibility-scale"),
     accentednessBlock: document.getElementById("accentedness-block"),
@@ -105,6 +109,7 @@
     playedAtIso: "",
     firstKeyRtMs: null,
     replayCount: 0,
+    dictationResponseType: "",
     downloadBlobUrl: null,
     downloadName: "",
     running: false,
@@ -896,6 +901,7 @@
     state.playedAtIso = "";
     state.firstKeyRtMs = null;
     state.replayCount = 0;
+    state.dictationResponseType = "";
 
     clearSelectedScale("comprehensibility");
     clearSelectedScale("accentedness");
@@ -905,6 +911,7 @@
     els.playBtn.disabled = false;
     els.playBtn.textContent = "Play audio";
     els.audioState.textContent = "Audio has not been played.";
+    updateDictationControls();
     updateTaskModeVisibility();
 
     const trialNumber = index + 1;
@@ -949,7 +956,7 @@
     state.replayCount += state.audioStartMs ? 1 : 0;
 
     state.audioEnded = false;
-    els.dictationInput.disabled = true;
+    updateDictationControls();
     setScaleDisabled("comprehensibility", true);
     setScaleDisabled("accentedness", true);
     updateNextState();
@@ -962,9 +969,9 @@
     audio.addEventListener("ended", () => {
       state.audioEnded = true;
       if (requiresDictation()) {
-        els.dictationInput.disabled = false;
         els.dictationInput.focus();
       }
+      updateDictationControls();
       if (requiresRatings()) {
         setScaleDisabled("comprehensibility", false);
         setScaleDisabled("accentedness", false);
@@ -983,6 +990,7 @@
       els.audioState.textContent = "This audio file could not be played.";
       els.railAudio.textContent = "Error";
       els.playBtn.disabled = false;
+      updateDictationControls();
       updateNextState();
     }, { once: true });
 
@@ -994,15 +1002,19 @@
     state.firstKeyRtMs = performance.now() - state.audioStartMs;
   }
 
-  function updateNextState() {
+  function currentTrialReady() {
     const played = state.audioEnded;
-    const dictationReady = !requiresDictation() || Boolean(els.dictationInput.value.trim());
-    const ratingReady = !requiresRatings() || Boolean(
+    const specialResponse = Boolean(state.dictationResponseType);
+    const dictationReady = specialResponse || !requiresDictation() || Boolean(els.dictationInput.value.trim());
+    const ratingReady = specialResponse || !requiresRatings() || Boolean(
       selectedScale("comprehensibility") &&
       selectedScale("accentedness")
     );
-    const ready = played && dictationReady && ratingReady;
-    els.nextBtn.disabled = !ready;
+    return played && dictationReady && ratingReady;
+  }
+
+  function updateNextState() {
+    els.nextBtn.disabled = !currentTrialReady();
   }
 
   function requiresDictation() {
@@ -1023,13 +1035,88 @@
       els.dictationInput.value = "";
       els.dictationInput.disabled = true;
     }
-    setScaleDisabled("comprehensibility", !ratings || !state.audioEnded);
-    setScaleDisabled("accentedness", !ratings || !state.audioEnded);
+    updateDictationControls();
+    setScaleDisabled("comprehensibility", !ratings || !state.audioEnded || Boolean(state.dictationResponseType));
+    setScaleDisabled("accentedness", !ratings || !state.audioEnded || Boolean(state.dictationResponseType));
+  }
+
+  function setDictationControlsDisabled(disabled) {
+    els.dictationUnintelligibleBtn.disabled = disabled;
+    els.dictationNoSpeechBtn.disabled = disabled;
+    els.dictationClearBtn.disabled = disabled || !state.dictationResponseType;
+  }
+
+  function updateDictationControls() {
+    const enabled = state.audioEnded;
+    const hasSpecialResponse = Boolean(state.dictationResponseType);
+    els.dictationInput.disabled = !requiresDictation() || !enabled || hasSpecialResponse;
+    setDictationControlsDisabled(!enabled);
+    els.dictationClearBtn.classList.toggle("hidden", !hasSpecialResponse);
+    els.dictationUnintelligibleBtn.dataset.selected = state.dictationResponseType === "unintelligible" ? "true" : "false";
+    els.dictationNoSpeechBtn.dataset.selected = state.dictationResponseType === "no_speech" ? "true" : "false";
+    els.dictationUnintelligibleBtn.setAttribute("aria-pressed", String(state.dictationResponseType === "unintelligible"));
+    els.dictationNoSpeechBtn.setAttribute("aria-pressed", String(state.dictationResponseType === "no_speech"));
+
+    if (!state.audioEnded) {
+      els.dictationStatus.textContent = "Play the full audio before typing, rating, or selecting an option.";
+    } else if (state.dictationResponseType === "unintelligible") {
+      els.dictationStatus.textContent = "Marked as: could not identify the word. Dictation and ratings will be saved as not rateable.";
+    } else if (state.dictationResponseType === "no_speech") {
+      els.dictationStatus.textContent = "Marked as: no speech or silent audio. Dictation and ratings will be saved as not rateable.";
+    } else {
+      els.dictationStatus.textContent = "Complete the response fields, or choose an option if the sample cannot be rated.";
+    }
+  }
+
+  function setDictationSpecialResponse(type) {
+    if (!state.audioEnded) {
+      els.audioState.textContent = "Play the audio to the end before choosing a response.";
+      updateNextState();
+      return;
+    }
+    state.dictationResponseType = type;
+    els.dictationInput.value = "";
+    clearSelectedScale("comprehensibility");
+    clearSelectedScale("accentedness");
+    updateDictationControls();
+    updateTaskModeVisibility();
+    updateNextState();
+  }
+
+  function clearDictationSpecialResponse() {
+    state.dictationResponseType = "";
+    updateDictationControls();
+    updateTaskModeVisibility();
+    updateNextState();
+    if (requiresDictation() && state.audioEnded) els.dictationInput.focus();
+  }
+
+  function handleDictationInput() {
+    if (els.dictationInput.value.trim() && state.dictationResponseType) {
+      state.dictationResponseType = "";
+    }
+    updateDictationControls();
+    updateNextState();
   }
 
   function saveTrialAndAdvance() {
+    if (!currentTrialReady()) {
+      if (!state.audioEnded) {
+        els.audioState.textContent = "Play the audio to the end before continuing.";
+      } else if (requiresDictation() && !els.dictationInput.value.trim() && !state.dictationResponseType) {
+        els.dictationStatus.textContent = "Enter the word you heard, or choose one of the response options.";
+      } else if (requiresRatings() && !state.dictationResponseType) {
+        els.dictationStatus.textContent = "Complete both ratings, or choose an option if the sample cannot be rated.";
+      }
+      updateNextState();
+      return;
+    }
+
     const item = state.trials[state.currentIndex];
     const typed = requiresDictation() ? els.dictationInput.value.trim() : "";
+    const dictationResponseType = requiresDictation()
+      ? state.dictationResponseType || (typed ? "typed" : "")
+      : "";
     const target = item.target_word || "";
     const normalizedTyped = normalizeResponse(typed);
     const normalizedTarget = normalizeResponse(target);
@@ -1062,6 +1149,9 @@
       practice_note: item.practice_note,
       source_format: item.source_format,
       target_word: target,
+      audio_response_type: state.dictationResponseType || "standard",
+      dictation_response_type: dictationResponseType,
+      rating_response_type: requiresRatings() ? (state.dictationResponseType || "rated") : "",
       typed_response: typed,
       normalized_response: normalizedTyped,
       normalized_target: normalizedTarget,
@@ -1071,8 +1161,8 @@
       submit_rt_ms: submitRt === null ? "" : submitRt.toFixed(1),
       audio_duration_s: currentAudio && Number.isFinite(currentAudio.duration) ? currentAudio.duration.toFixed(3) : "",
       replay_count: state.replayCount,
-      comprehensibility_1_10: requiresRatings() ? selectedScale("comprehensibility") : "",
-      accentedness_1_10: requiresRatings() ? selectedScale("accentedness") : "",
+      comprehensibility_1_10: requiresRatings() && !state.dictationResponseType ? selectedScale("comprehensibility") : "",
+      accentedness_1_10: requiresRatings() && !state.dictationResponseType ? selectedScale("accentedness") : "",
     });
 
     const nextIndex = state.currentIndex + 1;
@@ -1426,7 +1516,14 @@
     });
   });
   els.dictationInput.addEventListener("keydown", handleFirstKey);
-  els.dictationInput.addEventListener("input", updateNextState);
+  els.dictationInput.addEventListener("input", handleDictationInput);
+  els.dictationUnintelligibleBtn.addEventListener("click", () => {
+    setDictationSpecialResponse("unintelligible");
+  });
+  els.dictationNoSpeechBtn.addEventListener("click", () => {
+    setDictationSpecialResponse("no_speech");
+  });
+  els.dictationClearBtn.addEventListener("click", clearDictationSpecialResponse);
   els.nextBtn.addEventListener("click", saveTrialAndAdvance);
   els.taskMode.addEventListener("change", updateSelectedMaterialSummary);
   els.audioFiles.addEventListener("change", updateSelectedMaterialSummary);
