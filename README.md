@@ -46,6 +46,8 @@ Local audio import remains available under `Technical fallback`, but it is inten
 
 Use `remote_manifest.csv` when participant recordings are already uploaded to GitHub or GitHub Pages. The default manifest loads automatically, the setup screen lists available `participant_id` values as checkboxes, and the rater prepares only the checked participants. A custom manifest URL is available through `Use a different GitHub manifest`.
 
+The bundled placeholder manifest includes 24 MP3 files under `recordings/placeholders/`: `P001` through `P006`, with four recordings per participant. Experimental condition and accent metadata remain in `remote_manifest.csv` and the exported CSV/JSON, but raters only see anonymized participant IDs.
+
 For recordings collected with `Accentedness_Tests`, generate this file from the `Accentedness_Tests` repository root with:
 
 ```bash
@@ -61,27 +63,27 @@ Accentedness_Comprehensibility/
   index.html
   remote_manifest.csv
   recordings/
-    001/
-      001_production_001_icicle.mp3
-      001_production_002_acorn.mp3
-    002/
-      002_production_001_icicle.mp3
+    P001/
+      P001_production_001_icicle.mp3
+      P001_production_002_acorn.mp3
+    P002/
+      P002_production_001_icicle.mp3
 ```
 
 In this layout, `remote_manifest.csv` can use relative paths:
 
 ```csv
 audio_file,target_word,participant_id,native_language,condition
-recordings/001/001_production_001_icicle.mp3,icicle,001,japanese,production
-recordings/001/001_production_002_acorn.mp3,acorn,001,japanese,production
-recordings/002/002_production_001_icicle.mp3,icicle,002,chinese,production
+recordings/P001/P001_production_001_icicle.mp3,icicle,P001,japanese,production
+recordings/P001/P001_production_002_acorn.mp3,acorn,P001,japanese,production
+recordings/P002/P002_production_001_icicle.mp3,icicle,P002,chinese,production
 ```
 
 You can also use an absolute `audio_url` column for raw GitHub or another static host:
 
 ```csv
 audio_url,target_word,participant_id,native_language,condition
-https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness_Comprehensibility/main/recordings/001/001_production_001_icicle.mp3,icicle,001,japanese,production
+https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness_Comprehensibility/main/recordings/P001/P001_production_001_icicle.mp3,icicle,P001,japanese,production
 ```
 
 Rater flow:

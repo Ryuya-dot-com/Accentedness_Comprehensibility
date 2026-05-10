@@ -1,13 +1,25 @@
 audio_file,target_word,participant_id,native_language,condition,accent_condition,talker,pass_number,trial_number,word_number,take_number,spoken_form,practice_note
-practice_audio/english/chocolate.mp3,chocolate,practice_english,english,practice,english,Samantha,,1,1,,chocolate,Remote manifest demo sample
-practice_audio/english/coffee.mp3,coffee,practice_english,english,practice,english,Samantha,,2,2,,coffee,Remote manifest demo sample
-practice_audio/english/pizza.mp3,pizza,practice_english,english,practice,english,Samantha,,3,3,,pizza,Remote manifest demo sample
-practice_audio/english/sofa.mp3,sofa,practice_english,english,practice,english,Samantha,,4,4,,sofa,Remote manifest demo sample
-practice_audio/japanese/chocolate.mp3,chocolate,practice_japanese,japanese,practice,japanese,Kyoko,,1,1,,chocolate,Remote manifest demo sample
-practice_audio/japanese/coffee.mp3,coffee,practice_japanese,japanese,practice,japanese,Kyoko,,2,2,,coffee,Remote manifest demo sample
-practice_audio/japanese/pizza.mp3,pizza,practice_japanese,japanese,practice,japanese,Kyoko,,3,3,,pizza,Remote manifest demo sample
-practice_audio/japanese/sofa.mp3,sofa,practice_japanese,japanese,practice,japanese,Kyoko,,4,4,,sofa,Remote manifest demo sample
-practice_audio/chinese/chocolate.mp3,chocolate,practice_chinese,chinese,practice,chinese,Tingting,,1,1,,chocolate,Remote manifest demo sample
-practice_audio/chinese/coffee.mp3,coffee,practice_chinese,chinese,practice,chinese,Tingting,,2,2,,coffee,Remote manifest demo sample
-practice_audio/chinese/pizza.mp3,pizza,practice_chinese,chinese,practice,chinese,Tingting,,3,3,,pizza,Remote manifest demo sample
-practice_audio/chinese/sofa.mp3,sofa,practice_chinese,chinese,practice,chinese,Tingting,,4,4,,sofa,Remote manifest demo sample
+recordings/placeholders/P001/P001_chocolate.mp3,chocolate,P001,english,placeholder,english,Samantha,,1,1,,chocolate,Placeholder recording for rater training
+recordings/placeholders/P001/P001_coffee.mp3,coffee,P001,english,placeholder,english,Samantha,,2,2,,coffee,Placeholder recording for rater training
+recordings/placeholders/P001/P001_pizza.mp3,pizza,P001,english,placeholder,english,Samantha,,3,3,,pizza,Placeholder recording for rater training
+recordings/placeholders/P001/P001_sofa.mp3,sofa,P001,english,placeholder,english,Samantha,,4,4,,sofa,Placeholder recording for rater training
+recordings/placeholders/P002/P002_chocolate.mp3,chocolate,P002,english,placeholder,english,Samantha,,1,1,,chocolate,Placeholder recording for rater training
+recordings/placeholders/P002/P002_coffee.mp3,coffee,P002,english,placeholder,english,Samantha,,2,2,,coffee,Placeholder recording for rater training
+recordings/placeholders/P002/P002_pizza.mp3,pizza,P002,english,placeholder,english,Samantha,,3,3,,pizza,Placeholder recording for rater training
+recordings/placeholders/P002/P002_sofa.mp3,sofa,P002,english,placeholder,english,Samantha,,4,4,,sofa,Placeholder recording for rater training
+recordings/placeholders/P003/P003_chocolate.mp3,chocolate,P003,japanese,placeholder,japanese,Kyoko,,1,1,,chocolate,Placeholder recording for rater training
+recordings/placeholders/P003/P003_coffee.mp3,coffee,P003,japanese,placeholder,japanese,Kyoko,,2,2,,coffee,Placeholder recording for rater training
+recordings/placeholders/P003/P003_pizza.mp3,pizza,P003,japanese,placeholder,japanese,Kyoko,,3,3,,pizza,Placeholder recording for rater training
+recordings/placeholders/P003/P003_sofa.mp3,sofa,P003,japanese,placeholder,japanese,Kyoko,,4,4,,sofa,Placeholder recording for rater training
+recordings/placeholders/P004/P004_chocolate.mp3,chocolate,P004,japanese,placeholder,japanese,Kyoko,,1,1,,chocolate,Placeholder recording for rater training
+recordings/placeholders/P004/P004_coffee.mp3,coffee,P004,japanese,placeholder,japanese,Kyoko,,2,2,,coffee,Placeholder recording for rater training
+recordings/placeholders/P004/P004_pizza.mp3,pizza,P004,japanese,placeholder,japanese,Kyoko,,3,3,,pizza,Placeholder recording for rater training
+recordings/placeholders/P004/P004_sofa.mp3,sofa,P004,japanese,placeholder,japanese,Kyoko,,4,4,,sofa,Placeholder recording for rater training
+recordings/placeholders/P005/P005_chocolate.mp3,chocolate,P005,chinese,placeholder,chinese,Tingting,,1,1,,chocolate,Placeholder recording for rater training
+recordings/placeholders/P005/P005_coffee.mp3,coffee,P005,chinese,placeholder,chinese,Tingting,,2,2,,coffee,Placeholder recording for rater training
+recordings/placeholders/P005/P005_pizza.mp3,pizza,P005,chinese,placeholder,chinese,Tingting,,3,3,,pizza,Placeholder recording for rater training
+recordings/placeholders/P005/P005_sofa.mp3,sofa,P005,chinese,placeholder,chinese,Tingting,,4,4,,sofa,Placeholder recording for rater training
+recordings/placeholders/P006/P006_chocolate.mp3,chocolate,P006,chinese,placeholder,chinese,Tingting,,1,1,,chocolate,Placeholder recording for rater training
+recordings/placeholders/P006/P006_coffee.mp3,coffee,P006,chinese,placeholder,chinese,Tingting,,2,2,,coffee,Placeholder recording for rater training
+recordings/placeholders/P006/P006_pizza.mp3,pizza,P006,chinese,placeholder,chinese,Tingting,,3,3,,pizza,Placeholder recording for rater training
+recordings/placeholders/P006/P006_sofa.mp3,sofa,P006,chinese,placeholder,chinese,Tingting,,4,4,,sofa,Placeholder recording for rater training
