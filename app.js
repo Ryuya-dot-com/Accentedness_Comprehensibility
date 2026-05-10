@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.3.7";
+  const VERSION = "pronunciation_rating_v0.3.8";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -690,11 +690,6 @@
     const manifestMessage = state.manifestRows.length
       ? `manifest_rows: ${state.manifestRows.length}`
       : "manifest_rows: 0";
-    const preview = state.trials.slice(0, 5).map((item, index) => {
-      const target = item.target_word ? "target=available" : "target=missing";
-      return `${index + 1}. ${item.file_name} (${target})`;
-    }).join("\n");
-
     setLog([
       `version: ${VERSION}`,
       `audio_files: ${state.items.length}`,
@@ -703,9 +698,7 @@
       `task_mode: ${formatTaskMode(taskMode)}`,
       `shuffle_seed: rater_id`,
       extraLogLine,
-      "",
-      "first_trials:",
-      preview,
+      "trial_preview: hidden",
     ].filter((line) => line !== "").join("\n"));
 
     updateStartButtonState();
