@@ -208,6 +208,68 @@ summary:focus-visible {
   line-height: 1.1;
 }
 
+.setup-stepper {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 22px;
+}
+
+.setup-step {
+  align-items: center;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink-muted);
+  display: flex;
+  gap: 10px;
+  min-height: 54px;
+  padding: 10px 12px;
+}
+
+.setup-step span,
+.step-number {
+  align-items: center;
+  background: #dfe8ee;
+  border-radius: 999px;
+  color: #23313f;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 900;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+
+.setup-step strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.setup-step[data-state="current"] {
+  background: #edf8f8;
+  border-color: #9bc5c9;
+  color: var(--accent-strong);
+}
+
+.setup-step[data-state="current"] span,
+.setup-step[data-state="done"] span,
+.step-number {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.setup-step[data-state="done"] {
+  background: #f4faf6;
+  border-color: #bde1cb;
+  color: var(--green);
+}
+
+.setup-step[data-state="locked"] {
+  opacity: 0.52;
+}
+
 .setup-layout {
   display: grid;
   gap: 20px;
@@ -219,8 +281,30 @@ summary:focus-visible {
 }
 
 .setup-section h3 {
+  align-items: center;
+  display: flex;
+  gap: 10px;
   font-size: 15px;
   margin: 0 0 12px;
+}
+
+.setup-step-panel.is-hidden {
+  display: none;
+}
+
+.step-copy {
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.5;
+  margin: -4px 0 14px;
+}
+
+.step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .form-grid {
@@ -235,6 +319,13 @@ label {
   font-size: 14px;
   font-weight: 700;
   gap: 7px;
+}
+
+label small {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
 }
 
 .checkbox-label {
@@ -450,6 +541,39 @@ label {
   font-weight: 600;
   line-height: 1.45;
   margin: 10px 0 0;
+}
+
+.review-card {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 14px;
+}
+
+.review-card div {
+  background: #ffffff;
+  border: 1px solid #dce3eb;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.review-card span {
+  color: var(--ink-muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.review-card strong {
+  color: #24313f;
+  display: block;
+  font-size: 17px;
+  overflow-wrap: anywhere;
 }
 
 #prepare-btn {
@@ -692,6 +816,8 @@ label {
   .upload-grid,
   .participant-grid,
   .anchor-grid,
+  .review-card,
+  .setup-stepper,
   .status-grid,
   .rating-workspace {
     grid-template-columns: 1fr;

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.3.9";
+  const VERSION = "pronunciation_rating_v0.4.0";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -20,6 +20,17 @@
     statusTargets: document.getElementById("status-targets"),
     statusManifest: document.getElementById("status-manifest"),
     statusMode: document.getElementById("status-mode"),
+    setupSteps: document.querySelectorAll(".setup-step"),
+    setupStepPanels: document.querySelectorAll(".setup-step-panel"),
+    continueRaterBtn: document.getElementById("continue-rater-btn"),
+    backToRaterBtn: document.getElementById("back-to-rater-btn"),
+    continuePracticeBtn: document.getElementById("continue-practice-btn"),
+    backToPracticeBtn: document.getElementById("back-to-practice-btn"),
+    backToParticipantsBtn: document.getElementById("back-to-participants-btn"),
+    reviewRater: document.getElementById("review-rater"),
+    reviewPractice: document.getElementById("review-practice"),
+    reviewParticipants: document.getElementById("review-participants"),
+    reviewQueue: document.getElementById("review-queue"),
     raterId: document.getElementById("rater-id"),
     sessionId: document.getElementById("session-id"),
     seed: document.getElementById("seed"),
@@ -89,6 +100,7 @@
     practiceMode: false,
     practiceCompleted: false,
     visibilityWarningShown: false,
+    setupStep: 1,
   };
 
   function setLog(message) {
@@ -115,6 +127,82 @@
     els.setupStatus.dataset.ready = ready ? "true" : "false";
   }
 
+  function setupReadiness() {
+    return {
+      chromeOk: isChromeBrowser(),
+      hasRater: Boolean(els.raterId.value.trim()),
+      practiceDone: state.practiceCompleted,
+      selectedParticipants: selectedRemoteParticipants(),
+      queueCount: state.trials.length,
+    };
+  }
+
+  function maxReachableSetupStep() {
+    const readiness = setupReadiness();
+    if (!readiness.hasRater) return 1;
+    if (!readiness.practiceDone) return 2;
+    if (!readiness.queueCount) return 3;
+    return 4;
+  }
+
+  function updateReviewSummary() {
+    const readiness = setupReadiness();
+    const itemParticipants = [...new Set(state.items.map((item) => item.participant_id).filter(Boolean))];
+    els.reviewRater.textContent = readiness.hasRater ? els.raterId.value.trim() : "Missing";
+    els.reviewPractice.textContent = readiness.practiceDone ? "Complete" : "Required";
+    els.reviewParticipants.textContent = readiness.selectedParticipants.length
+      ? readiness.selectedParticipants.join(", ")
+      : itemParticipants.length
+        ? itemParticipants.join(", ")
+      : "None selected";
+    els.reviewQueue.textContent = `${readiness.queueCount} sample${readiness.queueCount === 1 ? "" : "s"}`;
+  }
+
+  function renderSetupWizard() {
+    const maxStep = maxReachableSetupStep();
+    if (state.setupStep > maxStep) state.setupStep = maxStep;
+    if (state.setupStep < 1) state.setupStep = 1;
+
+    els.setupStepPanels.forEach((panel) => {
+      panel.classList.toggle("is-hidden", Number(panel.dataset.step) !== state.setupStep);
+    });
+
+    els.setupSteps.forEach((stepEl) => {
+      const step = Number(stepEl.dataset.step);
+      let stepState = "locked";
+      if (step === state.setupStep) stepState = "current";
+      else if (step < maxStep) stepState = "done";
+      else if (step <= maxStep) stepState = "available";
+      stepEl.dataset.state = stepState;
+    });
+
+    const readiness = setupReadiness();
+    els.continueRaterBtn.disabled = !readiness.chromeOk || !readiness.hasRater;
+    els.continuePracticeBtn.disabled = !readiness.practiceDone;
+    updateReviewSummary();
+  }
+
+  function goToSetupStep(step) {
+    const readiness = setupReadiness();
+    if (step > 1 && !readiness.hasRater) {
+      setSetupStatus("Rater needed");
+      setLog("Enter the assigned rater ID before continuing.");
+      els.raterId.focus();
+      state.setupStep = 1;
+    } else if (step > 2 && !readiness.practiceDone) {
+      setSetupStatus("Practice needed");
+      setLog("Complete the practice samples before selecting participant recordings.");
+      state.setupStep = 2;
+    } else if (step > 3 && !readiness.queueCount) {
+      setSetupStatus("Queue needed");
+      setLog("Select participant IDs and prepare the rating queue before starting.");
+      state.setupStep = 3;
+    } else {
+      state.setupStep = step;
+    }
+    renderSetupWizard();
+  }
+
   function updatePracticeStatus() {
     const chromeOk = isChromeBrowser();
     const hasRater = Boolean(els.raterId.value.trim());
@@ -124,6 +212,7 @@
     els.practiceStatus.textContent = state.practiceCompleted
       ? "Practice complete. You can prepare and start the main rating session."
       : "Complete the practice before starting the main rating session.";
+    renderSetupWizard();
   }
 
   function updateStartButtonState() {
@@ -527,6 +616,7 @@
     resetDownload();
     els.downloadBtn.disabled = true;
     updateStartButtonState();
+    renderSetupWizard();
   }
 
   function updateRemoteParticipantActions() {
@@ -703,6 +793,7 @@
 
     updateStartButtonState();
     els.downloadBtn.disabled = true;
+    goToSetupStep(4);
   }
 
   function resetDownload() {
@@ -987,6 +1078,7 @@
     setSetupStatus(selectedRemoteParticipants().length ? "Ready to prepare" : "Participant needed", Boolean(selectedRemoteParticipants().length));
     setLog("Practice complete. Select participant IDs and prepare the main rating queue.");
     showOnly(els.setupPanel);
+    goToSetupStep(3);
   }
 
   function showBreak(nextIndex) {
@@ -1188,6 +1280,7 @@
     state.practiceMode = false;
     state.practiceCompleted = false;
     state.visibilityWarningShown = false;
+    state.setupStep = 1;
     els.startBtn.disabled = true;
     els.downloadBtn.disabled = true;
     els.audioFiles.value = "";
@@ -1271,10 +1364,16 @@
     });
     updateRemoteParticipantActions();
   });
+  els.continueRaterBtn.addEventListener("click", () => goToSetupStep(2));
+  els.backToRaterBtn.addEventListener("click", () => goToSetupStep(1));
+  els.continuePracticeBtn.addEventListener("click", () => goToSetupStep(3));
+  els.backToPracticeBtn.addEventListener("click", () => goToSetupStep(2));
+  els.backToParticipantsBtn.addEventListener("click", () => goToSetupStep(3));
   els.prepareRemoteBtn.addEventListener("click", prepareSelectedRemoteParticipant);
   els.raterId.addEventListener("input", () => {
     clearPreparedQueue();
     updateSelectedMaterialSummary();
+    renderSetupWizard();
   });
   els.sessionId.addEventListener("input", updateSelectedMaterialSummary);
   els.startPracticeBtn.addEventListener("click", () => {
