@@ -46,7 +46,7 @@ Local audio import remains available under `Technical fallback`, but it is inten
 
 Use `remote_manifest.csv` when participant recordings are already uploaded to GitHub or GitHub Pages. The default manifest loads automatically, the setup screen lists available `participant_id` values as checkboxes, and the rater prepares only the checked participants. A custom manifest URL is available through `Use a different GitHub manifest`.
 
-The bundled placeholder manifest includes 24 MP3 files under `recordings/placeholders/`: `P001` through `P006`, with four recordings per participant. Experimental condition and accent metadata remain in `remote_manifest.csv` and the exported CSV/JSON, but raters only see anonymized participant IDs.
+The bundled placeholder manifest includes 24 MP3 files under `recordings/placeholders/`: `p001` through `p006`, with four recordings per participant. The placeholder filenames mirror `Accentedness_Tests` output, for example `p001_picture_naming_001_chocolate.mp3`. Experimental condition and accent metadata remain in `remote_manifest.csv` and the exported CSV/JSON, but raters only see anonymized participant IDs.
 
 For recordings collected with `Accentedness_Tests`, generate this file from the `Accentedness_Tests` repository root with:
 
@@ -63,27 +63,29 @@ Accentedness_Comprehensibility/
   index.html
   remote_manifest.csv
   recordings/
-    P001/
-      P001_production_001_icicle.mp3
-      P001_production_002_acorn.mp3
-    P002/
-      P002_production_001_icicle.mp3
+    p001/
+      picture_naming/
+        p001_picture_naming_001_acorn.mp3
+        p001_picture_naming_002_icicle.mp3
+    p002/
+      picture_naming/
+        p002_picture_naming_001_acorn.mp3
 ```
 
 In this layout, `remote_manifest.csv` can use relative paths:
 
 ```csv
-audio_file,target_word,participant_id,native_language,condition
-recordings/P001/P001_production_001_icicle.mp3,icicle,P001,japanese,production
-recordings/P001/P001_production_002_acorn.mp3,acorn,P001,japanese,production
-recordings/P002/P002_production_001_icicle.mp3,icicle,P002,chinese,production
+audio_file,target_word,participant_id,task,native_language,condition
+recordings/p001/picture_naming/p001_picture_naming_001_acorn.mp3,acorn,p001,picture_naming,japanese,production
+recordings/p001/picture_naming/p001_picture_naming_002_icicle.mp3,icicle,p001,picture_naming,japanese,production
+recordings/p002/picture_naming/p002_picture_naming_001_acorn.mp3,acorn,p002,picture_naming,chinese,production
 ```
 
 You can also use an absolute `audio_url` column for raw GitHub or another static host:
 
 ```csv
-audio_url,target_word,participant_id,native_language,condition
-https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness_Comprehensibility/main/recordings/P001/P001_production_001_icicle.mp3,icicle,P001,japanese,production
+audio_url,target_word,participant_id,task,native_language,condition
+https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness_Comprehensibility/main/recordings/p001/picture_naming/p001_picture_naming_001_acorn.mp3,acorn,p001,picture_naming,japanese,production
 ```
 
 Rater flow:
@@ -103,6 +105,7 @@ Important: uploaded participant recordings must be anonymized before publication
 For the GitHub workflow, the manifest is required because it tells the platform which uploaded audio files belong to each participant. For local import only, the platform can infer target words from these existing filename patterns:
 
 ```text
+p001_picture_naming_001_acorn.mp3
 001_production_001_icicle.mp3
 001_japanese_pass01_natural_english_word001_icicle_take01_trial0001_talker_m1_guy.mp3
 ```
@@ -116,6 +119,7 @@ Supported column names include:
 - `audio_url`, `url`, `source_url`, or `raw_url`
 - `target_word`, `word`, `item`, or `expected_word`
 - `participant_id`, `participant`, `speaker_id`, or `speaker`
+- `task`, `task_name`, or `phase`
 - `native_language`, `native`, or `l1`
 - `condition`, `pass_condition`, or `variability_condition`
 - `accent_condition` or `accent`

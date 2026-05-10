@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.3.6";
+  const VERSION = "pronunciation_rating_v0.3.7";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -303,10 +303,23 @@
 
   function parseRecordingName(fileName) {
     const base = fileName.replace(/\.[^.]+$/, "");
+    const testsRecording = base.match(/^(.+?)_(picture_naming|l2_to_l1_translation|l2_to_l1)_(\d+)_([a-z][a-z0-9_-]*)$/i);
+    if (testsRecording) {
+      const task = testsRecording[2] === "l2_to_l1_translation" ? "l2_to_l1" : testsRecording[2];
+      return {
+        participant_id: testsRecording[1],
+        task,
+        trial_number: testsRecording[3],
+        target_word: testsRecording[4],
+        source_format: "accentedness_tests_recording",
+      };
+    }
+
     const production = base.match(/^(.+?)_production_(\d+)_([a-z][a-z-]*)$/i);
     if (production) {
       return {
         participant_id: production[1],
+        task: "production",
         trial_number: production[2],
         target_word: production[3],
         source_format: "vocabulary_platform_production",
@@ -325,6 +338,7 @@
         take_number: pilot[7],
         trial_number: pilot[8],
         talker: pilot[9],
+        task: "learning_phase",
         source_format: "pilot_learning_phase",
       };
     }
@@ -473,6 +487,7 @@
         source_path: sourcePath,
         file_name: fileName,
         target_word: targetWord,
+        task: valueFrom(row, ["task", "task_name", "phase"]) || parsed.task || "",
         participant_id: participantIdFromRow(row) || parsed.participant_id || participantId,
         native_language: valueFrom(row, ["native_language", "native", "l1"]) || parsed.native_language || "",
         condition: valueFrom(row, ["condition", "pass_condition", "variability_condition"]) || parsed.condition || "",
@@ -484,7 +499,7 @@
         take_number: valueFrom(row, ["take_number", "take"]) || parsed.take_number || "",
         spoken_form: valueFrom(row, ["spoken_form", "spoken_text", "prompt"]),
         practice_note: valueFrom(row, ["practice_note", "note", "notes"]),
-        source_format: "github_remote",
+        source_format: parsed.source_format === "unknown_filename" ? "github_remote" : parsed.source_format,
         manifest: row,
       };
     });
@@ -920,6 +935,7 @@
       source_path: item.source_path,
       audio_url: item.audio_url || "",
       file_name: item.file_name,
+      task: item.task,
       participant_id: item.participant_id,
       native_language: item.native_language,
       accent_condition: item.accent_condition,
@@ -1019,6 +1035,7 @@
         source_path: item.source_path,
         audio_url: item.audio_url || "",
         file_name: item.file_name,
+        task: item.task,
         target_word: item.target_word,
         participant_id: item.participant_id,
         condition: item.condition,
@@ -1053,6 +1070,7 @@
         source_path: sourcePath,
         file_name: file.name,
         target_word: targetWord,
+        task: valueFrom(manifest, ["task", "task_name", "phase"]) || parsed.task || "",
         participant_id: valueFrom(manifest, ["participant_id", "participant", "speaker_id", "speaker"]) || parsed.participant_id || "",
         native_language: valueFrom(manifest, ["native_language", "native", "l1"]) || parsed.native_language || "",
         condition: valueFrom(manifest, ["condition", "pass_condition", "variability_condition"]) || parsed.condition || "",

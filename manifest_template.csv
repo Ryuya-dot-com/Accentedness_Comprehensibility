@@ -1,2 +1,2 @@
-audio_file,target_word,participant_id,native_language,condition,accent_condition,talker,pass_number,trial_number,word_number,take_number
-recordings/001_production_001_icicle.mp3,icicle,001,japanese,production,japanese,j1,,1,1,
+audio_file,target_word,participant_id,task,native_language,condition,accent_condition,talker,pass_number,trial_number,word_number,take_number
+recordings/p001/picture_naming/p001_picture_naming_001_acorn.mp3,acorn,p001,picture_naming,japanese,production,japanese,j1,,1,1,
