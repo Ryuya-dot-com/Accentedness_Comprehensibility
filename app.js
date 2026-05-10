@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.3.4";
+  const VERSION = "pronunciation_rating_v0.3.5";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -14,6 +14,7 @@
     taskPanel: document.getElementById("task-panel"),
     breakPanel: document.getElementById("break-panel"),
     completePanel: document.getElementById("complete-panel"),
+    browserWarning: document.getElementById("browser-warning"),
     setupStatus: document.getElementById("setup-status"),
     statusAudio: document.getElementById("status-audio"),
     statusTargets: document.getElementById("status-targets"),
@@ -36,7 +37,8 @@
     remoteClearBtn: document.getElementById("remote-clear-btn"),
     loadParticipantsBtn: document.getElementById("load-participants-btn"),
     prepareRemoteBtn: document.getElementById("prepare-remote-btn"),
-    loadPracticeBtn: document.getElementById("load-practice-btn"),
+    startPracticeBtn: document.getElementById("start-practice-btn"),
+    practiceStatus: document.getElementById("practice-status"),
     prepareBtn: document.getElementById("prepare-btn"),
     startBtn: document.getElementById("start-btn"),
     downloadBtn: document.getElementById("download-btn"),
@@ -84,6 +86,9 @@
     downloadBlobUrl: null,
     downloadName: "",
     running: false,
+    practiceMode: false,
+    practiceCompleted: false,
+    visibilityWarningShown: false,
   };
 
   function setLog(message) {
@@ -96,9 +101,33 @@
     return "Combined";
   }
 
+  function isChromeBrowser() {
+    const userAgent = navigator.userAgent || "";
+    const vendor = navigator.vendor || "";
+    return /Chrome\//.test(userAgent) &&
+      /Google Inc/.test(vendor) &&
+      !/Edg\//.test(userAgent) &&
+      !/OPR\//.test(userAgent);
+  }
+
   function setSetupStatus(text, ready = false) {
     els.setupStatus.textContent = text;
     els.setupStatus.dataset.ready = ready ? "true" : "false";
+  }
+
+  function updatePracticeStatus() {
+    const chromeOk = isChromeBrowser();
+    const hasRater = Boolean(els.raterId.value.trim());
+    els.browserWarning.classList.toggle("hidden", chromeOk);
+    els.startPracticeBtn.disabled = !chromeOk || !hasRater || state.practiceMode;
+    els.startPracticeBtn.textContent = state.practiceCompleted ? "Practice again" : "Start practice";
+    els.practiceStatus.textContent = state.practiceCompleted
+      ? "Practice complete. You can prepare and start the main rating session."
+      : "Complete the practice before starting the main rating session.";
+  }
+
+  function updateStartButtonState() {
+    els.startBtn.disabled = !isChromeBrowser() || !state.practiceCompleted || !state.trials.length || state.practiceMode;
   }
 
   function participantCountFromRows(rows) {
@@ -133,8 +162,13 @@
     const manifestCount = state.manifestRows.length || state.remoteRows.length || (els.manifestFile.files[0] ? "selected" : 0);
     const remoteSelectionNeeded = state.remoteRows.length > 0 && selectedRemoteParticipants().length === 0;
     updateSetupSummary(audioCount, targetCount, manifestCount);
-    if (audioCount && !els.raterId.value.trim()) {
+    updatePracticeStatus();
+    if (!isChromeBrowser()) {
+      setSetupStatus("Chrome required");
+    } else if (audioCount && !els.raterId.value.trim()) {
       setSetupStatus("Rater needed");
+    } else if (els.raterId.value.trim() && !state.practiceCompleted) {
+      setSetupStatus("Practice needed");
     } else if (remoteSelectionNeeded) {
       setSetupStatus("Participant needed");
     } else if (audioCount && els.raterId.value.trim()) {
@@ -142,6 +176,7 @@
     } else {
       setSetupStatus("Waiting for uploaded set");
     }
+    updateStartButtonState();
   }
 
   function showOnly(panel) {
@@ -390,9 +425,18 @@
 
   async function prepareTrials() {
     const raterId = els.raterId.value.trim();
+    if (!isChromeBrowser()) {
+      setSetupStatus("Chrome required");
+      return;
+    }
     if (!raterId) {
       setLog("Enter a rater ID before preparing local files.");
       setSetupStatus("Rater needed");
+      return;
+    }
+    if (!state.practiceCompleted) {
+      setLog("Complete the practice before preparing local files.");
+      setSetupStatus("Practice needed");
       return;
     }
     if (!els.sessionId.value.trim() || els.sessionId.value.trim() === "auto") {
@@ -411,34 +455,7 @@
   }
 
   function prepareFileRecords(fileRecords, manifestRows) {
-    const manifestIndex = buildManifestIndex(manifestRows);
-
-    state.items = fileRecords.map(({ file, sourcePath }, index) => {
-      const parsed = parseRecordingName(file.name);
-      const manifest = manifestIndex.get(pathKey(sourcePath)) || manifestIndex.get(fileKey(sourcePath)) || manifestIndex.get(fileKey(file.name)) || {};
-      const targetWord = valueFrom(manifest, ["target_word", "word", "item", "expected_word"]) || parsed.target_word || "";
-      return {
-        id: index + 1,
-        file,
-        source_path: sourcePath,
-        file_name: file.name,
-        target_word: targetWord,
-        participant_id: valueFrom(manifest, ["participant_id", "participant", "speaker_id", "speaker"]) || parsed.participant_id || "",
-        native_language: valueFrom(manifest, ["native_language", "native", "l1"]) || parsed.native_language || "",
-        condition: valueFrom(manifest, ["condition", "pass_condition", "variability_condition"]) || parsed.condition || "",
-        accent_condition: valueFrom(manifest, ["accent_condition", "accent"]) || "",
-        talker: valueFrom(manifest, ["talker", "talker_id", "voice", "voice_alias"]) || parsed.talker || "",
-        pass_number: valueFrom(manifest, ["pass_number", "pass"]) || parsed.pass_number || "",
-        trial_number: valueFrom(manifest, ["trial_number", "trial"]) || parsed.trial_number || "",
-        word_number: valueFrom(manifest, ["word_number", "word_id", "item_id"]) || parsed.word_number || "",
-        take_number: valueFrom(manifest, ["take_number", "take"]) || parsed.take_number || "",
-        spoken_form: valueFrom(manifest, ["spoken_form", "spoken_text", "prompt"]),
-        practice_note: valueFrom(manifest, ["practice_note", "note", "notes"]),
-        source_format: parsed.source_format,
-        manifest,
-      };
-    });
-
+    state.items = fileRecordsToItems(fileRecords, manifestRows);
     finishPreparedItems(manifestRows);
   }
 
@@ -493,8 +510,8 @@
     state.rows = [];
     state.currentIndex = -1;
     resetDownload();
-    els.startBtn.disabled = true;
     els.downloadBtn.disabled = true;
+    updateStartButtonState();
   }
 
   function updateRemoteParticipantActions() {
@@ -502,7 +519,7 @@
     const selected = selectedRemoteParticipants();
     els.remoteSelectAllBtn.disabled = inputs.length === 0;
     els.remoteClearBtn.disabled = inputs.length === 0;
-    els.prepareRemoteBtn.disabled = selected.length === 0;
+    els.prepareRemoteBtn.disabled = selected.length === 0 || !isChromeBrowser() || !state.practiceCompleted;
     updateSelectedMaterialSummary();
   }
 
@@ -574,8 +591,12 @@
     const participants = populateParticipantSelect(usableRows, url);
     els.sourceSummary.textContent = els.customManifestToggle.checked ? `Loaded: ${url}` : `Default loaded: ${DEFAULT_REMOTE_MANIFEST_URL}`;
     updateSelectedMaterialSummary();
-    if (!els.raterId.value.trim()) {
+    if (!isChromeBrowser()) {
+      setSetupStatus("Chrome required");
+    } else if (!els.raterId.value.trim()) {
       setSetupStatus("Rater needed");
+    } else if (!state.practiceCompleted) {
+      setSetupStatus("Practice needed");
     } else if (selectedRemoteParticipants().length) {
       setSetupStatus("Ready to prepare");
     } else {
@@ -595,10 +616,19 @@
   function prepareSelectedRemoteParticipant() {
     const raterId = els.raterId.value.trim();
     const participantIds = selectedRemoteParticipants();
+    if (!isChromeBrowser()) {
+      setSetupStatus("Chrome required");
+      return;
+    }
     if (!raterId) {
       setSetupStatus("Rater needed");
       setLog("Enter a rater ID before preparing selected participant recordings.");
       els.raterId.focus();
+      return;
+    }
+    if (!state.practiceCompleted) {
+      setSetupStatus("Practice needed");
+      setLog("Complete the practice before preparing the main rating queue.");
       return;
     }
     if (!participantIds.length) {
@@ -641,7 +671,7 @@
 
     const targetCount = state.items.filter((item) => item.target_word).length;
     updateSetupSummary(state.items.length, targetCount, state.manifestRows.length);
-    setSetupStatus("Ready", true);
+    setSetupStatus(state.practiceCompleted ? "Ready" : "Practice needed", state.practiceCompleted);
     const manifestMessage = state.manifestRows.length
       ? `manifest_rows: ${state.manifestRows.length}`
       : "manifest_rows: 0";
@@ -663,7 +693,7 @@
       preview,
     ].filter((line) => line !== "").join("\n"));
 
-    els.startBtn.disabled = false;
+    updateStartButtonState();
     els.downloadBtn.disabled = true;
   }
 
@@ -710,8 +740,22 @@
   }
 
   function startSession() {
+    if (!isChromeBrowser()) {
+      setSetupStatus("Chrome required");
+      return;
+    }
+    if (!state.practiceCompleted) {
+      setSetupStatus("Practice needed");
+      setLog("Complete the practice before starting the main rating session.");
+      return;
+    }
+    if (!state.trials.length) {
+      setSetupStatus("Queue needed");
+      return;
+    }
+    state.practiceMode = false;
     state.running = true;
-    els.startBtn.disabled = true;
+    updateStartButtonState();
     showOnly(els.taskPanel);
     showTrial(0);
   }
@@ -737,8 +781,8 @@
 
     const trialNumber = index + 1;
     const total = state.trials.length;
-    els.taskPhase.textContent = `Sample ${trialNumber} of ${total}`;
-    els.trialTitle.textContent = "Listen, transcribe, and rate";
+    els.taskPhase.textContent = state.practiceMode ? `Practice ${trialNumber} of ${total}` : `Sample ${trialNumber} of ${total}`;
+    els.trialTitle.textContent = state.practiceMode ? "Practice: listen, transcribe, and rate" : "Listen, transcribe, and rate";
     els.progressFill.style.width = `${Math.max(0, (index / total) * 100)}%`;
     els.progressText.textContent = `${index} of ${total} completed`;
     els.railMode.textContent = `${trialNumber} / ${total}`;
@@ -797,7 +841,11 @@
         setScaleDisabled("comprehensibility", false);
         setScaleDisabled("accentedness", false);
       }
-      els.audioState.textContent = "Audio played once. Complete the response fields.";
+      els.playBtn.disabled = false;
+      els.playBtn.textContent = "Replay audio";
+      els.audioState.textContent = state.replayCount
+        ? `Audio replayed ${state.replayCount} time${state.replayCount === 1 ? "" : "s"}. Complete the response fields.`
+        : "Audio played once. Complete the response fields.";
       els.railAudio.textContent = "Played";
       updateNextState();
     }, { once: true });
@@ -901,14 +949,35 @@
     const nextIndex = state.currentIndex + 1;
     const breakInterval = Number.parseInt(els.breakInterval.value, 10) || 0;
     if (nextIndex >= state.trials.length) {
+      if (state.practiceMode) {
+        completePracticeSession();
+        return;
+      }
       completeSession();
       return;
     }
-    if (breakInterval > 0 && nextIndex % breakInterval === 0) {
+    if (!state.practiceMode && breakInterval > 0 && nextIndex % breakInterval === 0) {
       showBreak(nextIndex);
       return;
     }
     showTrial(nextIndex);
+  }
+
+  function completePracticeSession() {
+    cleanupAudio();
+    state.practiceMode = false;
+    state.practiceCompleted = true;
+    state.running = false;
+    state.rows = [];
+    state.trials = [];
+    state.items = [];
+    state.currentIndex = -1;
+    els.sessionId.value = "auto";
+    updatePracticeStatus();
+    updateRemoteParticipantActions();
+    setSetupStatus(selectedRemoteParticipants().length ? "Ready to prepare" : "Participant needed", Boolean(selectedRemoteParticipants().length));
+    setLog("Practice complete. Select participant IDs and prepare the main rating queue.");
+    showOnly(els.setupPanel);
   }
 
   function showBreak(nextIndex) {
@@ -972,6 +1041,35 @@
     els.downloadBtn.disabled = false;
   }
 
+  function fileRecordsToItems(fileRecords, manifestRows) {
+    const manifestIndex = buildManifestIndex(manifestRows);
+    return fileRecords.map(({ file, sourcePath }, index) => {
+      const parsed = parseRecordingName(file.name);
+      const manifest = manifestIndex.get(pathKey(sourcePath)) || manifestIndex.get(fileKey(sourcePath)) || manifestIndex.get(fileKey(file.name)) || {};
+      const targetWord = valueFrom(manifest, ["target_word", "word", "item", "expected_word"]) || parsed.target_word || "";
+      return {
+        id: index + 1,
+        file,
+        source_path: sourcePath,
+        file_name: file.name,
+        target_word: targetWord,
+        participant_id: valueFrom(manifest, ["participant_id", "participant", "speaker_id", "speaker"]) || parsed.participant_id || "",
+        native_language: valueFrom(manifest, ["native_language", "native", "l1"]) || parsed.native_language || "",
+        condition: valueFrom(manifest, ["condition", "pass_condition", "variability_condition"]) || parsed.condition || "",
+        accent_condition: valueFrom(manifest, ["accent_condition", "accent"]) || "",
+        talker: valueFrom(manifest, ["talker", "talker_id", "voice", "voice_alias"]) || parsed.talker || "",
+        pass_number: valueFrom(manifest, ["pass_number", "pass"]) || parsed.pass_number || "",
+        trial_number: valueFrom(manifest, ["trial_number", "trial"]) || parsed.trial_number || "",
+        word_number: valueFrom(manifest, ["word_number", "word_id", "item_id"]) || parsed.word_number || "",
+        take_number: valueFrom(manifest, ["take_number", "take"]) || parsed.take_number || "",
+        spoken_form: valueFrom(manifest, ["spoken_form", "spoken_text", "prompt"]),
+        practice_note: valueFrom(manifest, ["practice_note", "note", "notes"]),
+        source_format: parsed.source_format,
+        manifest,
+      };
+    });
+  }
+
   function setDownload(blob, fileName) {
     resetDownload();
     state.downloadBlobUrl = URL.createObjectURL(blob);
@@ -991,19 +1089,13 @@
     a.remove();
   }
 
-  async function loadPracticeSamples() {
-    if (!els.raterId.value.trim()) els.raterId.value = "practice_rater";
-    if (!els.sessionId.value.trim() || els.sessionId.value.trim() === "auto") els.sessionId.value = "practice_session";
-    els.loadPracticeBtn.disabled = true;
-    setSetupStatus("Loading");
-    setLog("Loading bundled practice samples...");
-
+  async function loadPracticeFileRecords(limit = 3) {
     const manifestResponse = await fetch("practice_manifest.csv", { cache: "no-store" });
     if (!manifestResponse.ok) {
       throw new Error(`Could not load practice_manifest.csv (${manifestResponse.status})`);
     }
 
-    const manifestRows = parseCsv(await manifestResponse.text());
+    const manifestRows = parseCsv(await manifestResponse.text()).slice(0, limit);
     const fileRecords = [];
     for (const row of manifestRows) {
       const audioPath = valueFrom(row, REQUIRED_MANIFEST_FILE_COLUMNS);
@@ -1016,17 +1108,54 @@
       const file = new File([blob], fileKey(audioPath), { type: blob.type || "audio/wav" });
       fileRecords.push({ file, sourcePath: audioPath });
     }
+    return { manifestRows, fileRecords };
+  }
 
-    state.manifestRows = manifestRows;
-    prepareFileRecords(fileRecords, manifestRows);
-    els.loadPracticeBtn.disabled = false;
+  async function startPractice() {
+    if (!isChromeBrowser()) {
+      setSetupStatus("Chrome required");
+      return;
+    }
+    if (!els.raterId.value.trim()) {
+      setSetupStatus("Rater needed");
+      els.raterId.focus();
+      return;
+    }
+    if (!els.sessionId.value.trim() || els.sessionId.value.trim() === "auto") els.sessionId.value = "practice_check";
+    els.startPracticeBtn.disabled = true;
+    setSetupStatus("Loading");
+    setLog("Loading bundled practice samples...");
+
+    const { manifestRows, fileRecords } = await loadPracticeFileRecords();
+    state.practiceMode = true;
+    state.running = true;
+    state.rows = [];
+    state.items = fileRecordsToItems(fileRecords, manifestRows);
+    state.trials = shuffle(state.items, `practice_${els.raterId.value.trim()}_${VERSION}`);
+    state.currentIndex = -1;
+    resetDownload();
+    setSetupStatus("Practice running");
+    setLog("Practice started. Complete all practice samples before the main rating session.");
+    showOnly(els.taskPanel);
+    showTrial(0);
   }
 
   function pauseSession() {
+    if (state.practiceMode) {
+      state.practiceMode = false;
+      state.running = false;
+      cleanupAudio();
+      clearPreparedQueue();
+      updatePracticeStatus();
+      updateSelectedMaterialSummary();
+      setLog("Practice stopped. Complete the practice before starting the main rating session.");
+      showOnly(els.setupPanel);
+      return;
+    }
     state.running = false;
     cleanupAudio();
     showOnly(els.setupPanel);
-    els.startBtn.disabled = false;
+    updateStartButtonState();
     els.downloadBtn.disabled = state.rows.length === 0;
     setLog(`Paused after ${state.rows.length} of ${state.trials.length} samples.\nDownload partial results before closing the browser.`);
     if (state.rows.length) buildDownload();
@@ -1043,6 +1172,9 @@
     state.remoteRows = [];
     state.remoteManifestUrl = "";
     state.currentIndex = -1;
+    state.practiceMode = false;
+    state.practiceCompleted = false;
+    state.visibilityWarningShown = false;
     els.startBtn.disabled = true;
     els.downloadBtn.disabled = true;
     els.audioFiles.value = "";
@@ -1055,6 +1187,7 @@
     resetRemoteParticipantSelect();
     syncCustomManifestVisibility();
     setLog("");
+    updatePracticeStatus();
     updateSetupSummary(0, 0, 0);
     setSetupStatus("Loading participants");
     showOnly(els.setupPanel);
@@ -1077,6 +1210,19 @@
     if (!state.running && state.rows.length === 0) return;
     event.preventDefault();
     event.returnValue = "";
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!state.running) return;
+    if (document.hidden) {
+      state.visibilityWarningShown = true;
+      return;
+    }
+    if (state.visibilityWarningShown) {
+      state.visibilityWarningShown = false;
+      els.audioState.textContent = "Please keep this page open until the session is complete.";
+      window.alert("Please keep this page open until the rating session is complete.");
+    }
   });
 
   els.versionLabel.textContent = VERSION;
@@ -1118,9 +1264,9 @@
     updateSelectedMaterialSummary();
   });
   els.sessionId.addEventListener("input", updateSelectedMaterialSummary);
-  els.loadPracticeBtn.addEventListener("click", () => {
-    loadPracticeSamples().catch((error) => {
-      els.loadPracticeBtn.disabled = false;
+  els.startPracticeBtn.addEventListener("click", () => {
+    startPractice().catch((error) => {
+      updatePracticeStatus();
       setSetupStatus("Practice load failed");
       setLog(`Practice sample load failed: ${error.message}`);
     });

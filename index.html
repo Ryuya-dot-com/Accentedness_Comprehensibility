@@ -17,6 +17,10 @@
       </header>
 
       <section class="panel setup-panel" id="setup-panel">
+        <div class="browser-warning hidden" id="browser-warning">
+          Google Chromeで開いてください。このページでは音声再生と保存処理の安定性のためChromeのみを使用します。
+        </div>
+
         <div class="panel-heading">
           <div>
             <h2>Session setup</h2>
@@ -56,6 +60,18 @@
               <input id="seed" type="hidden" value="" />
               <input id="task-mode" type="hidden" value="combined" />
               <input id="break-interval" type="hidden" value="40" />
+            </div>
+          </section>
+
+          <section class="setup-section">
+            <h3>Practice</h3>
+            <div class="practice-card">
+              <div>
+                <p class="remote-kicker">Required before rating</p>
+                <h4>Practice samples</h4>
+                <p id="practice-status">Complete the practice before starting the main rating session.</p>
+              </div>
+              <button id="start-practice-btn" class="secondary" disabled>Start practice</button>
             </div>
           </section>
 
@@ -118,7 +134,6 @@
                 </label>
               </div>
               <button id="prepare-btn" class="secondary">Prepare local files</button>
-              <button id="load-practice-btn" class="secondary">Load practice samples</button>
             </details>
           </section>
         </div>

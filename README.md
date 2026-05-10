@@ -29,15 +29,18 @@ http://127.0.0.1:8765/
 ## Workflow
 
 1. Enter a rater ID.
-2. Check participant ID(s) from the automatically loaded GitHub manifest.
-3. Click `Prepare rating queue`.
-4. Click `Start rating`.
-5. For each sample, play the audio once, then complete the displayed response fields.
-6. Download the ZIP at the end of the session.
+2. Complete the required practice samples.
+3. Check participant ID(s) from the automatically loaded GitHub manifest.
+4. Click `Prepare rating queue`.
+5. Click `Start rating`.
+6. For each sample, play the audio, then complete the displayed response fields.
+7. Download the ZIP at the end of the session.
 
 Raters do not choose a session label, randomization seed, task mode, or condition. The platform always collects comprehensibility, accentedness, and intelligibility together. Session labels and shuffled trial order are generated automatically, while condition metadata remains in the output file.
 
-Local WAV import and practice samples remain available under `Technical fallback`, but they are intended for pilot checks or recovery when the uploaded manifest is unavailable.
+Use Google Chrome for data collection. The platform disables practice and rating preparation outside Chrome. If the rater tries to leave or switch away during a running session, the browser shows a warning. Audio can be replayed within a trial, and replay counts are written to the output.
+
+Local WAV import remains available under `Technical fallback`, but it is intended for pilot checks or recovery when the uploaded manifest is unavailable. Practice samples are loaded from the required `Practice` section.
 
 ## GitHub Audio Workflow
 
@@ -84,9 +87,10 @@ https://raw.githubusercontent.com/Ryuya-dot-com/Accentedness_Comprehensibility/m
 Rater flow:
 
 1. Enter `Rater ID`.
-2. Check one or more `Participant ID` values.
-3. Click `Prepare rating queue`.
-4. Start rating.
+2. Complete `Practice samples`.
+3. Check one or more `Participant ID` values.
+4. Click `Prepare rating queue`.
+5. Start rating.
 
 The downloaded CSV and assignment JSON include `audio_url`, `source_path`, and `participant_id` so the rated material can be audited later. See `remote_manifest_template.csv` for a minimal template.
 
@@ -139,7 +143,7 @@ practice_manifest.csv
 
 The English samples use English TTS. The Japanese samples use katakana-shaped forms such as `チョコレート`, and the Chinese samples use comparable loanword/cognate forms such as `巧克力`. These are for rater practice and interface checks only, not for final data collection.
 
-After generating the files, start the local web server, open `Technical fallback`, and click `Load practice samples`. The bundled practice loader uses browser `fetch`, so use `http://127.0.0.1:8765/` rather than opening `index.html` directly from Finder.
+The bundled practice loader uses browser `fetch`, so use `http://127.0.0.1:8765/` rather than opening `index.html` directly from Finder.
 
 ## Output
 
@@ -157,6 +161,7 @@ Important CSV columns:
 - `intelligibility_needs_manual_review`
 - `first_key_rt_ms`
 - `submit_rt_ms`
+- `replay_count`
 - `comprehensibility_1_10`
 - `accentedness_1_10`
 
