@@ -270,6 +270,44 @@ summary:focus-visible {
   opacity: 0.52;
 }
 
+.setup-progress {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: -8px 0 22px;
+  padding: 12px;
+}
+
+.setup-progress-label {
+  align-items: center;
+  color: var(--ink-muted);
+  display: flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.setup-progress-label strong {
+  color: var(--accent-strong);
+  white-space: nowrap;
+}
+
+.setup-progress-track {
+  background: #e5ebf0;
+  border-radius: 999px;
+  height: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+#setup-progress-fill {
+  background: var(--accent);
+  height: 100%;
+  transition: width 180ms ease;
+  width: 0;
+}
+
 .setup-layout {
   display: grid;
   gap: 20px;

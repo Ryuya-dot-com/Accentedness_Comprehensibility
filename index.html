@@ -67,6 +67,23 @@
           </div>
         </div>
 
+        <div class="setup-progress" aria-live="polite">
+          <div class="setup-progress-label">
+            <span id="setup-progress-text">Step 1 of 4: Enter rater ID</span>
+            <strong id="setup-progress-percent">0%</strong>
+          </div>
+          <div
+            class="setup-progress-track"
+            role="progressbar"
+            aria-label="Setup progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <div id="setup-progress-fill"></div>
+          </div>
+        </div>
+
         <div class="setup-layout">
           <section class="setup-section setup-step-panel" id="step-rater" data-step="1">
             <h3><span class="step-number">1</span> Enter rater ID</h3>
@@ -234,7 +251,15 @@
           <button id="pause-btn" class="secondary">Pause</button>
         </div>
 
-        <div class="progress-track" aria-hidden="true">
+        <div
+          class="progress-track"
+          id="rating-progress-track"
+          role="progressbar"
+          aria-label="Rating progress"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
           <div id="progress-fill"></div>
         </div>
         <div class="progress-text" id="progress-text">0 of 0 completed</div>

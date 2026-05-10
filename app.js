@@ -1,12 +1,18 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.4.0";
+  const VERSION = "pronunciation_rating_v0.4.1";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
   const REMOTE_AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const DEFAULT_BREAK_INTERVAL = 40;
+  const SETUP_STEP_LABELS = {
+    1: "Enter rater ID",
+    2: "Complete practice",
+    3: "Select participant recordings",
+    4: "Review and start",
+  };
 
   const els = {
     versionLabel: document.getElementById("version-label"),
@@ -22,6 +28,10 @@
     statusMode: document.getElementById("status-mode"),
     setupSteps: document.querySelectorAll(".setup-step"),
     setupStepPanels: document.querySelectorAll(".setup-step-panel"),
+    setupProgressText: document.getElementById("setup-progress-text"),
+    setupProgressPercent: document.getElementById("setup-progress-percent"),
+    setupProgressTrack: document.querySelector(".setup-progress-track"),
+    setupProgressFill: document.getElementById("setup-progress-fill"),
     continueRaterBtn: document.getElementById("continue-rater-btn"),
     backToRaterBtn: document.getElementById("back-to-rater-btn"),
     continuePracticeBtn: document.getElementById("continue-practice-btn"),
@@ -58,6 +68,7 @@
     setupLog: document.getElementById("setup-log"),
     taskPhase: document.getElementById("task-phase"),
     trialTitle: document.getElementById("trial-title"),
+    progressTrack: document.getElementById("rating-progress-track"),
     progressFill: document.getElementById("progress-fill"),
     progressText: document.getElementById("progress-text"),
     railMode: document.getElementById("rail-mode"),
@@ -127,6 +138,20 @@
     els.setupStatus.dataset.ready = ready ? "true" : "false";
   }
 
+  function percentComplete(done, total) {
+    if (!total) return 0;
+    return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+  }
+
+  function progressSummary(done, total) {
+    return `${done} of ${total} completed (${percentComplete(done, total)}%)`;
+  }
+
+  function setProgress(track, fill, percent) {
+    fill.style.width = `${percent}%`;
+    track.setAttribute("aria-valuenow", String(percent));
+  }
+
   function setupReadiness() {
     return {
       chromeOk: isChromeBrowser(),
@@ -162,6 +187,7 @@
     const maxStep = maxReachableSetupStep();
     if (state.setupStep > maxStep) state.setupStep = maxStep;
     if (state.setupStep < 1) state.setupStep = 1;
+    const setupPercent = percentComplete(state.setupStep - 1, 3);
 
     els.setupStepPanels.forEach((panel) => {
       panel.classList.toggle("is-hidden", Number(panel.dataset.step) !== state.setupStep);
@@ -179,6 +205,9 @@
     const readiness = setupReadiness();
     els.continueRaterBtn.disabled = !readiness.chromeOk || !readiness.hasRater;
     els.continuePracticeBtn.disabled = !readiness.practiceDone;
+    els.setupProgressText.textContent = `Step ${state.setupStep} of 4: ${SETUP_STEP_LABELS[state.setupStep]}`;
+    els.setupProgressPercent.textContent = `${setupPercent}%`;
+    setProgress(els.setupProgressTrack, els.setupProgressFill, setupPercent);
     updateReviewSummary();
   }
 
@@ -882,8 +911,8 @@
     const total = state.trials.length;
     els.taskPhase.textContent = state.practiceMode ? `Practice ${trialNumber} of ${total}` : `Sample ${trialNumber} of ${total}`;
     els.trialTitle.textContent = state.practiceMode ? "Practice: listen, transcribe, and rate" : "Listen, transcribe, and rate";
-    els.progressFill.style.width = `${Math.max(0, (index / total) * 100)}%`;
-    els.progressText.textContent = `${index} of ${total} completed`;
+    setProgress(els.progressTrack, els.progressFill, percentComplete(index, total));
+    els.progressText.textContent = progressSummary(index, total);
     els.railMode.textContent = `${trialNumber} / ${total}`;
     els.railCompleted.textContent = String(index);
     els.railRemaining.textContent = String(total - index);
@@ -1084,7 +1113,7 @@
   function showBreak(nextIndex) {
     cleanupAudio();
     const total = state.trials.length;
-    els.breakMessage.textContent = `${nextIndex} of ${total} samples completed.`;
+    els.breakMessage.textContent = `${progressSummary(nextIndex, total)}.`;
     showOnly(els.breakPanel);
   }
 
@@ -1096,8 +1125,8 @@
   async function completeSession() {
     cleanupAudio();
     state.running = false;
-    els.progressFill.style.width = "100%";
-    els.progressText.textContent = `${state.trials.length} of ${state.trials.length} completed`;
+    setProgress(els.progressTrack, els.progressFill, 100);
+    els.progressText.textContent = progressSummary(state.trials.length, state.trials.length);
     els.railCompleted.textContent = String(state.trials.length);
     els.railRemaining.textContent = "0";
     els.railAudio.textContent = "Complete";
