@@ -214,7 +214,7 @@ summary:focus-visible {
 .form-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  grid-template-columns: minmax(220px, 360px);
 }
 
 label {

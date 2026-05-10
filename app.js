@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.3.3";
+  const VERSION = "pronunciation_rating_v0.3.4";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -101,11 +101,29 @@
     els.setupStatus.dataset.ready = ready ? "true" : "false";
   }
 
+  function participantCountFromRows(rows) {
+    return new Set(rows.map(participantIdFromRow).filter(Boolean)).size;
+  }
+
+  function participantCountFromItems(items) {
+    return new Set(items.map((item) => item.participant_id).filter(Boolean)).size;
+  }
+
+  function sessionIdValue() {
+    return els.sessionId.value.trim() || "auto";
+  }
+
   function updateSetupSummary(audioCount = state.items.length, targetCount = 0, manifestCount = state.manifestRows.length) {
+    const participantCount = state.remoteRows.length
+      ? participantCountFromRows(state.remoteRows)
+      : participantCountFromItems(state.items);
+    const selectedCount = selectedRemoteParticipants().length;
+    const queueCount = state.trials.length || state.items.length || 0;
+
     els.statusAudio.textContent = String(audioCount || 0);
-    els.statusTargets.textContent = String(targetCount || 0);
-    els.statusManifest.textContent = manifestCount ? String(manifestCount) : "none";
-    els.statusMode.textContent = formatTaskMode(els.taskMode.value);
+    els.statusTargets.textContent = String(participantCount || targetCount || 0);
+    els.statusManifest.textContent = String(selectedCount || 0);
+    els.statusMode.textContent = String(queueCount || 0);
   }
 
   function updateSelectedMaterialSummary() {
@@ -115,12 +133,12 @@
     const manifestCount = state.manifestRows.length || state.remoteRows.length || (els.manifestFile.files[0] ? "selected" : 0);
     const remoteSelectionNeeded = state.remoteRows.length > 0 && selectedRemoteParticipants().length === 0;
     updateSetupSummary(audioCount, targetCount, manifestCount);
-    if (remoteSelectionNeeded) {
+    if (audioCount && !els.raterId.value.trim()) {
+      setSetupStatus("Rater needed");
+    } else if (remoteSelectionNeeded) {
       setSetupStatus("Participant needed");
     } else if (audioCount && els.raterId.value.trim()) {
       setSetupStatus("Ready to prepare");
-    } else if (audioCount) {
-      setSetupStatus("Rater needed");
     } else {
       setSetupStatus("Waiting for uploaded set");
     }
@@ -372,11 +390,13 @@
 
   async function prepareTrials() {
     const raterId = els.raterId.value.trim();
-    const sessionId = els.sessionId.value.trim();
-    if (!raterId || !sessionId) {
-      setLog("Enter both a rater ID and a session label.");
+    if (!raterId) {
+      setLog("Enter a rater ID before preparing local files.");
       setSetupStatus("Rater needed");
       return;
+    }
+    if (!els.sessionId.value.trim() || els.sessionId.value.trim() === "auto") {
+      els.sessionId.value = `local_${new Date().toISOString().slice(0, 10)}`;
     }
 
     const fileRecords = collectAudioFiles();
@@ -391,8 +411,6 @@
   }
 
   function prepareFileRecords(fileRecords, manifestRows) {
-    const raterId = els.raterId.value.trim();
-    const sessionId = els.sessionId.value.trim();
     const manifestIndex = buildManifestIndex(manifestRows);
 
     state.items = fileRecords.map(({ file, sourcePath }, index) => {
@@ -469,6 +487,16 @@
     return [...els.remoteParticipantGrid.querySelectorAll("input:checked")].map((input) => input.value);
   }
 
+  function clearPreparedQueue() {
+    state.items = [];
+    state.trials = [];
+    state.rows = [];
+    state.currentIndex = -1;
+    resetDownload();
+    els.startBtn.disabled = true;
+    els.downloadBtn.disabled = true;
+  }
+
   function updateRemoteParticipantActions() {
     const inputs = els.remoteParticipantGrid.querySelectorAll("input");
     const selected = selectedRemoteParticipants();
@@ -502,7 +530,10 @@
       input.type = "checkbox";
       input.value = participantId;
       input.checked = participants.length === 1;
-      input.addEventListener("change", updateRemoteParticipantActions);
+      input.addEventListener("change", () => {
+        clearPreparedQueue();
+        updateRemoteParticipantActions();
+      });
       const text = document.createTextNode(participantId);
       const meta = document.createElement("span");
       meta.textContent = `${count} files`;
@@ -543,8 +574,10 @@
     const participants = populateParticipantSelect(usableRows, url);
     els.sourceSummary.textContent = els.customManifestToggle.checked ? `Loaded: ${url}` : `Default loaded: ${DEFAULT_REMOTE_MANIFEST_URL}`;
     updateSelectedMaterialSummary();
-    if (selectedRemoteParticipants().length) {
-      setSetupStatus(els.raterId.value.trim() ? "Ready to prepare" : "Rater needed");
+    if (!els.raterId.value.trim()) {
+      setSetupStatus("Rater needed");
+    } else if (selectedRemoteParticipants().length) {
+      setSetupStatus("Ready to prepare");
     } else {
       setSetupStatus("Participant needed");
     }
@@ -574,7 +607,7 @@
       els.remoteParticipantGrid.focus();
       return;
     }
-    if (!els.sessionId.value.trim()) {
+    if (!els.sessionId.value.trim() || els.sessionId.value.trim() === "auto") {
       els.sessionId.value = participantIds.length === 1
         ? `participant_${sanitizeName(participantIds[0])}`
         : `participants_${participantIds.length}_${new Date().toISOString().slice(0, 10)}`;
@@ -596,9 +629,10 @@
 
   function finishPreparedItems(manifestRows, extraLogLine = "") {
     const raterId = els.raterId.value.trim();
-    const sessionId = els.sessionId.value.trim();
+    const sessionId = sessionIdValue();
+    const sourceSignature = state.items.map((item) => item.source_path || item.audio_url || item.file_name).join("|");
 
-    const seed = els.seed.value.trim() || `${raterId}_${sessionId}_${VERSION}`;
+    const seed = els.seed.value.trim() || `${raterId}_${sessionId}_${sourceSignature}_${VERSION}`;
     const taskMode = els.taskMode.value;
     state.trials = shuffle(state.items, seed);
     state.rows = [];
@@ -621,8 +655,8 @@
       `audio_files: ${state.items.length}`,
       `target_words_available: ${targetCount}`,
       manifestMessage,
-      `task_mode: ${taskMode}`,
-      `seed: ${seed}`,
+      `task_mode: ${formatTaskMode(taskMode)}`,
+      `shuffle_seed: rater_id`,
       extraLogLine,
       "",
       "first_trials:",
@@ -707,7 +741,7 @@
     els.trialTitle.textContent = "Listen, transcribe, and rate";
     els.progressFill.style.width = `${Math.max(0, (index / total) * 100)}%`;
     els.progressText.textContent = `${index} of ${total} completed`;
-    els.railMode.textContent = formatTaskMode(els.taskMode.value);
+    els.railMode.textContent = `${trialNumber} / ${total}`;
     els.railCompleted.textContent = String(index);
     els.railRemaining.textContent = String(total - index);
     els.railAudio.textContent = "Pending";
@@ -829,7 +863,7 @@
     state.rows.push({
       platform_version: VERSION,
       rater_id: els.raterId.value.trim(),
-      session_id: els.sessionId.value.trim(),
+      session_id: sessionIdValue(),
       task_mode: els.taskMode.value,
       trial_index: state.currentIndex + 1,
       trial_total: state.trials.length,
@@ -907,7 +941,7 @@
     const assignment = {
       platform_version: VERSION,
       rater_id: els.raterId.value.trim(),
-      session_id: els.sessionId.value.trim(),
+      session_id: sessionIdValue(),
       task_mode: els.taskMode.value,
       created_at: new Date().toISOString(),
       trial_count: state.trials.length,
@@ -925,7 +959,7 @@
       })),
     };
 
-    const baseName = `${sanitizeName(els.raterId.value || "rater")}_${sanitizeName(els.sessionId.value || "session")}_pronunciation_ratings`;
+    const baseName = `${sanitizeName(els.raterId.value || "rater")}_${sanitizeName(sessionIdValue())}_pronunciation_ratings`;
     if (window.JSZip) {
       const zip = new JSZip();
       zip.file(`${baseName}.csv`, csv);
@@ -959,7 +993,7 @@
 
   async function loadPracticeSamples() {
     if (!els.raterId.value.trim()) els.raterId.value = "practice_rater";
-    if (!els.sessionId.value.trim()) els.sessionId.value = "practice_session";
+    if (!els.sessionId.value.trim() || els.sessionId.value.trim() === "auto") els.sessionId.value = "practice_session";
     els.loadPracticeBtn.disabled = true;
     setSetupStatus("Loading");
     setLog("Loading bundled practice samples...");
@@ -1014,6 +1048,10 @@
     els.audioFiles.value = "";
     els.audioFolder.value = "";
     els.manifestFile.value = "";
+    els.sessionId.value = "auto";
+    els.seed.value = "";
+    els.taskMode.value = "combined";
+    els.breakInterval.value = String(DEFAULT_BREAK_INTERVAL);
     resetRemoteParticipantSelect();
     syncCustomManifestVisibility();
     setLog("");
@@ -1061,19 +1099,24 @@
     }
   });
   els.remoteSelectAllBtn.addEventListener("click", () => {
+    clearPreparedQueue();
     els.remoteParticipantGrid.querySelectorAll("input").forEach((input) => {
       input.checked = true;
     });
     updateRemoteParticipantActions();
   });
   els.remoteClearBtn.addEventListener("click", () => {
+    clearPreparedQueue();
     els.remoteParticipantGrid.querySelectorAll("input").forEach((input) => {
       input.checked = false;
     });
     updateRemoteParticipantActions();
   });
   els.prepareRemoteBtn.addEventListener("click", prepareSelectedRemoteParticipant);
-  els.raterId.addEventListener("input", updateSelectedMaterialSummary);
+  els.raterId.addEventListener("input", () => {
+    clearPreparedQueue();
+    updateSelectedMaterialSummary();
+  });
   els.sessionId.addEventListener("input", updateSelectedMaterialSummary);
   els.loadPracticeBtn.addEventListener("click", () => {
     loadPracticeSamples().catch((error) => {

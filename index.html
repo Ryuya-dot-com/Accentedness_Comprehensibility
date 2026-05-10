@@ -20,27 +20,27 @@
         <div class="panel-heading">
           <div>
             <h2>Session setup</h2>
-            <p>Select uploaded participant recordings and prepare a blinded listener session.</p>
+            <p>Enter the rater ID, choose participant IDs, then start rating.</p>
           </div>
           <div class="setup-status" id="setup-status">Loading participants</div>
         </div>
 
         <div class="status-grid" aria-live="polite">
           <div>
-            <span>Audio</span>
+            <span>Recordings</span>
             <strong id="status-audio">0</strong>
           </div>
           <div>
-            <span>Targets</span>
+            <span>Participants</span>
             <strong id="status-targets">0</strong>
           </div>
           <div>
-            <span>Manifest</span>
-            <strong id="status-manifest">none</strong>
+            <span>Selected</span>
+            <strong id="status-manifest">0</strong>
           </div>
           <div>
-            <span>Mode</span>
-            <strong id="status-mode">combined</strong>
+            <span>Queue</span>
+            <strong id="status-mode">0</strong>
           </div>
         </div>
 
@@ -52,26 +52,10 @@
                 Rater ID
                 <input id="rater-id" type="text" autocomplete="off" placeholder="rater001" />
               </label>
-              <label>
-                Session label
-                <input id="session-id" type="text" autocomplete="off" placeholder="session01" />
-              </label>
-              <label>
-                Randomization seed
-                <input id="seed" type="text" autocomplete="off" placeholder="defaults to rater + session" />
-              </label>
-              <label>
-                Task mode
-                <select id="task-mode">
-                  <option value="combined">Combined: ratings + dictation</option>
-                  <option value="ratings">Ratings only</option>
-                  <option value="dictation">Dictation only</option>
-                </select>
-              </label>
-              <label>
-                Break interval
-                <input id="break-interval" type="number" min="0" max="200" value="40" />
-              </label>
+              <input id="session-id" type="hidden" value="auto" />
+              <input id="seed" type="hidden" value="" />
+              <input id="task-mode" type="hidden" value="combined" />
+              <input id="break-interval" type="hidden" value="40" />
             </div>
           </section>
 
@@ -81,8 +65,8 @@
               <div class="remote-heading">
                 <div>
                   <p class="remote-kicker">GitHub audio set</p>
-                  <h4>Choose participant ID(s)</h4>
-                  <p>Recordings are loaded from the uploaded manifest, then blinded and randomized for this rater.</p>
+                  <h4>Participant IDs</h4>
+                  <p>Select the participant IDs assigned to this rater.</p>
                 </div>
                 <button id="load-participants-btn" class="secondary">Reload participant list</button>
               </div>
@@ -105,14 +89,14 @@
                 <button id="remote-clear-btn" class="secondary" disabled>Clear</button>
               </div>
               <div id="remote-participant-grid" class="participant-grid empty">Loading participants...</div>
-              <button id="prepare-remote-btn" disabled>Prepare selected participants</button>
+              <button id="prepare-remote-btn" disabled>Prepare rating queue</button>
               <p class="privacy-note">
                 Use anonymized participant IDs only. Do not include names, student numbers, or other direct identifiers in uploaded filenames.
               </p>
             </div>
 
             <details class="local-import-details">
-              <summary>Local import / troubleshooting</summary>
+              <summary>Technical fallback</summary>
               <p>Use this only for pilot checks or when the uploaded GitHub manifest is not available.</p>
               <div class="upload-grid">
                 <label class="upload-card">
@@ -134,12 +118,13 @@
                 </label>
               </div>
               <button id="prepare-btn" class="secondary">Prepare local files</button>
+              <button id="load-practice-btn" class="secondary">Load practice samples</button>
             </details>
           </section>
         </div>
 
         <details class="scale-details">
-          <summary>Scale anchors shown to raters</summary>
+          <summary>Rating scale</summary>
           <div class="anchor-grid">
             <div>
               <h3>Comprehensibility</h3>
@@ -162,7 +147,6 @@
         </details>
 
         <div class="actions">
-          <button id="load-practice-btn" class="secondary">Load practice samples</button>
           <button id="start-btn" disabled>Start rating</button>
           <button id="download-btn" class="secondary" disabled>Download results</button>
         </div>
@@ -187,8 +171,8 @@
         <div class="rating-workspace">
           <aside class="trial-rail" aria-live="polite">
             <div>
-              <span>Mode</span>
-              <strong id="rail-mode">Combined</strong>
+              <span>Sample</span>
+              <strong id="rail-mode">0 / 0</strong>
             </div>
             <div>
               <span>Completed</span>

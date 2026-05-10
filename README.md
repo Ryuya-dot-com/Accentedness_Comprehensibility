@@ -30,17 +30,14 @@ http://127.0.0.1:8765/
 
 1. Enter a rater ID.
 2. Check participant ID(s) from the automatically loaded GitHub manifest.
-3. Click `Prepare selected participants`.
-4. Confirm or edit the auto-filled session label.
-5. Click `Start rating`.
-6. Choose a task mode:
-   - `Combined`: collect ratings and dictation in the same trial.
-   - `Ratings only`: collect comprehensibility and accentedness.
-   - `Dictation only`: collect intelligibility responses.
-7. For each sample, play the audio once, then complete the displayed response fields.
-8. Download the ZIP at the end of the session.
+3. Click `Prepare rating queue`.
+4. Click `Start rating`.
+5. For each sample, play the audio once, then complete the displayed response fields.
+6. Download the ZIP at the end of the session.
 
-Local WAV import remains available under `Local import / troubleshooting`, but it is intended for pilot checks or recovery when the uploaded manifest is unavailable.
+Raters do not choose a session label, randomization seed, task mode, or condition. The platform always collects comprehensibility, accentedness, and intelligibility together. Session labels and shuffled trial order are generated automatically, while condition metadata remains in the output file.
+
+Local WAV import and practice samples remain available under `Technical fallback`, but they are intended for pilot checks or recovery when the uploaded manifest is unavailable.
 
 ## GitHub Audio Workflow
 
@@ -88,7 +85,7 @@ Rater flow:
 
 1. Enter `Rater ID`.
 2. Check one or more `Participant ID` values.
-3. Click `Prepare selected participants`.
+3. Click `Prepare rating queue`.
 4. Start rating.
 
 The downloaded CSV and assignment JSON include `audio_url`, `source_path`, and `participant_id` so the rated material can be audited later. See `remote_manifest_template.csv` for a minimal template.
@@ -142,7 +139,7 @@ practice_manifest.csv
 
 The English samples use English TTS. The Japanese samples use katakana-shaped forms such as `チョコレート`, and the Chinese samples use comparable loanword/cognate forms such as `巧克力`. These are for rater practice and interface checks only, not for final data collection.
 
-After generating the files, start the local web server and click `Load practice samples` in the setup screen. The bundled practice loader uses browser `fetch`, so use `http://127.0.0.1:8765/` rather than opening `index.html` directly from Finder.
+After generating the files, start the local web server, open `Technical fallback`, and click `Load practice samples`. The bundled practice loader uses browser `fetch`, so use `http://127.0.0.1:8765/` rather than opening `index.html` directly from Finder.
 
 ## Output
 
